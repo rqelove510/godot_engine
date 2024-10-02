@@ -53,9 +53,9 @@ void PCKPacker::_bind_methods() {
 }
 
 Error PCKPacker::pck_start(const String &p_pck_path, int p_alignment, const String &p_key, bool p_encrypt_directory) {
-	ERR_FAIL_COND_V_MSG((p_key.is_empty() || !p_key.is_valid_hex_number(false) || p_key.length() != 64), ERR_CANT_CREATE, "Invalid Encryption Key (must be 64 characters long).");
-	ERR_FAIL_COND_V_MSG(p_alignment <= 0, ERR_CANT_CREATE, "Invalid alignment, must be greater then 0.");
-
+	//ERR_FAIL_COND_V_MSG((p_key.is_empty() || !p_key.is_valid_hex_number(false) || p_key.length() != 64), ERR_CANT_CREATE, "Invalid Encryption Key (must be 64 characters long).");
+	//ERR_FAIL_COND_V_MSG(p_alignment <= 0, ERR_CANT_CREATE, "Invalid alignment, must be greater then 0.");
+	Math::randomize();
 	String _key = p_key.to_lower();
 	key.resize(32);
 	for (int i = 0; i < 32; i++) {
@@ -84,30 +84,36 @@ Error PCKPacker::pck_start(const String &p_pck_path, int p_alignment, const Stri
 	enc_dir = p_encrypt_directory;
 
 	file = FileAccess::open(p_pck_path, FileAccess::WRITE);
-	ERR_FAIL_COND_V_MSG(file.is_null(), ERR_CANT_CREATE, "Can't open file to write: " + String(p_pck_path) + ".");
+	//ERR_FAIL_COND_V_MSG(file.is_null(), ERR_CANT_CREATE, "Can't open file to write: " + String(p_pck_path) + ".");
 
 	alignment = p_alignment;
 
 	file->store_32(PACK_HEADER_MAGIC);
-	file->store_32(PACK_FORMAT_VERSION);
-	file->store_32(VERSION_MAJOR);
-	file->store_32(VERSION_MINOR);
-	file->store_32(VERSION_PATCH);
-
 	uint32_t pack_flags = 0;
 	if (enc_dir) {
 		pack_flags |= PACK_DIR_ENCRYPTED;
 	}
-	file->store_32(pack_flags); // flags
 
+	file->store_16(pack_flags); // flags
+	file->store_16(PACK_FORMAT_VERSION); // flags
+
+	//file->store_32(PACK_FORMAT_VERSION);
+	//file->store_32(VERSION_MAJOR);
+	//file->store_32(VERSION_MINOR);
+	//file->store_32(VERSION_PATCH);
+	
+	for (int i = 0; i < 2; i++) {
+		file->store_32(Math::randf());
+	}
 	files.clear();
 	ofs = 0;
 
 	return OK;
 }
 
+//向files包中添加file文件(如.py,*.gd,*.xxx)
 Error PCKPacker::add_file(const String &p_pck_path, const String &p_src, bool p_encrypt) {
-	ERR_FAIL_COND_V_MSG(file.is_null(), ERR_INVALID_PARAMETER, "File must be opened before use.");
+	//ERR_FAIL_COND_V_MSG(file.is_null(), ERR_INVALID_PARAMETER, "File must be opened before use.");
 
 	Ref<FileAccess> f = FileAccess::open(p_src, FileAccess::READ);
 	if (f.is_null()) {
@@ -152,27 +158,27 @@ Error PCKPacker::add_file(const String &p_pck_path, const String &p_src, bool p_
 }
 
 Error PCKPacker::flush(bool p_verbose) {
-	ERR_FAIL_COND_V_MSG(file.is_null(), ERR_INVALID_PARAMETER, "File must be opened before use.");
+	//ERR_FAIL_COND_V_MSG(file.is_null(), ERR_INVALID_PARAMETER, "File must be opened before use.");
 
 	int64_t file_base_ofs = file->get_position();
-	file->store_64(0); // files base
+	file->store_64(0); // files base 文件数据的起始偏移，在索引写完后更新此处
 
-	for (int i = 0; i < 16; i++) {
-		file->store_32(0); // reserved
-	}
+	//for (int i = 0; i < 16; i++) {
+		//file->store_32(0); // reserved
+	//}
 
 	// write the index
-	file->store_32(files.size());
+	file->store_32(files.size() ^ PACK_PNUMS); //打包文件数量
 
 	Ref<FileAccessEncrypted> fae;
 	Ref<FileAccess> fhead = file;
 
 	if (enc_dir) {
 		fae.instantiate();
-		ERR_FAIL_COND_V(fae.is_null(), ERR_CANT_CREATE);
+		//ERR_FAIL_COND_V(fae.is_null(), ERR_CANT_CREATE);
 
 		Error err = fae->open_and_parse(file, key, FileAccessEncrypted::MODE_WRITE_AES256, false);
-		ERR_FAIL_COND_V(err != OK, ERR_CANT_CREATE);
+		//ERR_FAIL_COND_V(err != OK, ERR_CANT_CREATE);
 
 		fhead = fae;
 	}
@@ -181,13 +187,13 @@ Error PCKPacker::flush(bool p_verbose) {
 		int string_len = files[i].path.utf8().length();
 		int pad = _get_pad(4, string_len);
 
-		fhead->store_32(string_len + pad);
-		fhead->store_buffer((const uint8_t *)files[i].path.utf8().get_data(), string_len);
+		fhead->store_32(string_len + pad);//文件路径文本占用的字节数
+		fhead->store_buffer((const uint8_t *)files[i].path.utf8().get_data(), string_len);//写入完整文件名
 		for (int j = 0; j < pad; j++) {
 			fhead->store_8(0);
 		}
 
-		fhead->store_64(files[i].ofs);
+		fhead->store_64(files[i].ofs);//文件偏移
 		fhead->store_64(files[i].size); // pay attention here, this is where file is
 		fhead->store_buffer(files[i].md5.ptr(), 16); //also save md5 for file
 
@@ -207,10 +213,11 @@ Error PCKPacker::flush(bool p_verbose) {
 	for (int i = 0; i < header_padding; i++) {
 		file->store_8(0);
 	}
+	//文件索引结束，写数据
 
 	int64_t file_base = file->get_position();
 	file->seek(file_base_ofs);
-	file->store_64(file_base); // update files base
+	file->store_64(file_base ^ PACK_PNUM); // 写完索引后，更新数据真正开始的偏移信息字段
 	file->seek(file_base);
 
 	const uint32_t buf_max = 65536;
@@ -224,10 +231,10 @@ Error PCKPacker::flush(bool p_verbose) {
 		Ref<FileAccess> ftmp = file;
 		if (files[i].encrypted) {
 			fae.instantiate();
-			ERR_FAIL_COND_V(fae.is_null(), ERR_CANT_CREATE);
+			//ERR_FAIL_COND_V(fae.is_null(), ERR_CANT_CREATE);
 
 			Error err = fae->open_and_parse(file, key, FileAccessEncrypted::MODE_WRITE_AES256, false);
-			ERR_FAIL_COND_V(err != OK, ERR_CANT_CREATE);
+			//ERR_FAIL_COND_V(err != OK, ERR_CANT_CREATE);
 			ftmp = fae;
 		}
 
