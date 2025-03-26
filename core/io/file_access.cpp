@@ -205,9 +205,9 @@ Ref<FileAccess> FileAccess::open_encrypted(const String &p_path, ModeFlags p_mod
 		return fa;
 	}
 
-	Ref<FileAccessEncrypted> fae;
+	Ref<EncFile> fae;
 	fae.instantiate();
-	Error err = fae->open_and_parse(fa, p_key, (p_mode_flags == WRITE) ? FileAccessEncrypted::MODE_WRITE_AES256 : FileAccessEncrypted::MODE_READ, true, p_iv);
+	Error err = fae->open_file_parse(fa, p_key, (p_mode_flags == WRITE) ? EncFile::MODE_WRITE_AES256 : EncFile::MODE_READ, true, p_iv);
 	last_file_open_error = err;
 	if (err) {
 		return Ref<FileAccess>();
@@ -221,9 +221,9 @@ Ref<FileAccess> FileAccess::open_encrypted_pass(const String &p_path, ModeFlags 
 		return fa;
 	}
 
-	Ref<FileAccessEncrypted> fae;
+	Ref<EncFile> fae;
 	fae.instantiate();
-	Error err = fae->open_and_parse_password(fa, p_pass, (p_mode_flags == WRITE) ? FileAccessEncrypted::MODE_WRITE_AES256 : FileAccessEncrypted::MODE_READ);
+	Error err = fae->open_file_parse_pw(fa, p_pass, (p_mode_flags == WRITE) ? EncFile::MODE_WRITE_AES256 : EncFile::MODE_READ);
 	last_file_open_error = err;
 	if (err) {
 		return Ref<FileAccess>();

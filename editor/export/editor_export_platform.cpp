@@ -281,7 +281,7 @@ Error EditorExportPlatform::_save_pack_file(void *p_userdata, const String &p_pa
 		}
 	}
 
-	Ref<FileAccessEncrypted> fae;
+	Ref<EncFile> fae;
 	Ref<FileAccess> ftmp = pd->f;
 
 	if (sd.encrypted) {
@@ -305,7 +305,7 @@ Error EditorExportPlatform::_save_pack_file(void *p_userdata, const String &p_pa
 		fae.instantiate();
 		ERR_FAIL_COND_V(fae.is_null(), ERR_SKIP);
 
-		Error err = fae->open_and_parse(ftmp, p_key, FileAccessEncrypted::MODE_WRITE_AES256, false, iv);
+		Error err = fae->open_file_parse(ftmp, p_key, EncFile::MODE_WRITE_AES256, false, iv);
 		ERR_FAIL_COND_V(err != OK, ERR_SKIP);
 		ftmp = fae;
 	}
@@ -1987,7 +1987,7 @@ Error EditorExportPlatform::save_pack(const Ref<EditorExportPreset> &p_preset, b
 
 	f->store_32(pd.file_ofs.size()); //amount of files
 
-	Ref<FileAccessEncrypted> fae;
+	Ref<EncFile> fae;
 	Ref<FileAccess> fhead = f;
 
 	if (enc_pck && enc_directory) {
@@ -2046,7 +2046,7 @@ Error EditorExportPlatform::save_pack(const Ref<EditorExportPreset> &p_preset, b
 			}
 		}
 
-		err = fae->open_and_parse(f, key, FileAccessEncrypted::MODE_WRITE_AES256, false, iv);
+		err = fae->open_file_parse(f, key, EncFile::MODE_WRITE_AES256, false, iv);
 		if (err != OK) {
 			add_message(EXPORT_MESSAGE_ERROR, TTR("Save PCK"), TTR("Can't open encrypted file to write."));
 			return ERR_CANT_CREATE;

@@ -186,14 +186,14 @@ Error ZHGPacker::flush(bool p_verbose) {
 	// write the index
 	file->store_32(uint32_t(files.size()));
 
-	Ref<FileAccessEncrypted> fae;
+	Ref<EncFile> fae;
 	Ref<FileAccess> fhead = file;
 
 	if (enc_dir) {
 		fae.instantiate();
 		ERR_FAIL_COND_V(fae.is_null(), ERR_CANT_CREATE);
 
-		Error err = fae->open_and_parse(file, key, FileAccessEncrypted::MODE_WRITE_AES256, false);
+		Error err = fae->open_file_parse(file, key, EncFile::MODE_WRITE_AES256, false);
 		ERR_FAIL_COND_V(err != OK, ERR_CANT_CREATE);
 
 		fhead = fae;
@@ -256,7 +256,7 @@ Error ZHGPacker::flush(bool p_verbose) {
 			fae.instantiate();
 			ERR_FAIL_COND_V(fae.is_null(), ERR_CANT_CREATE);
 
-			Error err = fae->open_and_parse(file, key, FileAccessEncrypted::MODE_WRITE_AES256, false);
+			Error err = fae->open_file_parse(file, key, EncFile::MODE_WRITE_AES256, false);
 			ERR_FAIL_COND_V(err != OK, ERR_CANT_CREATE);
 			ftmp = fae;
 		}

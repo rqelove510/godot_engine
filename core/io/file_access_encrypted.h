@@ -35,7 +35,7 @@
 
 #define ENCRYPTED_HEADER_MAGIC 0x43454447
 
-class FileAccessEncrypted : public FileAccess {
+class EncFile : public FileAccess {
 public:
 	enum Mode : int32_t {
 		MODE_READ,
@@ -60,8 +60,8 @@ private:
 	static CryptoCore::RandomGenerator *_fae_static_rng;
 
 public:
-	Error open_and_parse(Ref<FileAccess> p_base, const Vector<uint8_t> &p_key, Mode p_mode, bool p_with_magic = true, const Vector<uint8_t> &p_iv = Vector<uint8_t>());
-	Error open_and_parse_password(Ref<FileAccess> p_base, const String &p_key, Mode p_mode);
+	Error open_file_parse(Ref<FileAccess> p_base, const Vector<uint8_t> &p_key, Mode p_mode, bool p_with_magic = true, const Vector<uint8_t> &p_iv = Vector<uint8_t>());
+	Error open_file_parse_pw(Ref<FileAccess> p_base, const String &p_key, Mode p_mode);
 
 	Vector<uint8_t> get_iv() const { return iv; }
 
@@ -103,6 +103,6 @@ public:
 
 	static void deinitialize();
 
-	FileAccessEncrypted() {}
-	~FileAccessEncrypted();
+	EncFile() {}
+	~EncFile();
 };

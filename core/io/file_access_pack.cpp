@@ -284,7 +284,7 @@ bool PackedSourcePCK::try_open_pack(const String &p_path, bool p_replace_files, 
 	}
 
 	if (enc_directory) {
-		Ref<FileAccessEncrypted> fae;
+		Ref<EncFile> fae;
 		fae.instantiate();
 		ERR_FAIL_COND_V_MSG(fae.is_null(), false, "Can't open encrypted pack directory.");
 
@@ -294,7 +294,7 @@ bool PackedSourcePCK::try_open_pack(const String &p_path, bool p_replace_files, 
 			key.write[i] = script_encryption_key[i];
 		}
 
-		Error err = fae->open_and_parse(f, key, FileAccessEncrypted::MODE_READ, false);
+		Error err = fae->open_file_parse(f, key, EncFile::MODE_READ, false);
 		ERR_FAIL_COND_V_MSG(err, false, "Can't open encrypted pack directory.");
 		f = fae;
 	}
@@ -474,7 +474,7 @@ FileAccessPack::FileAccessPack(const String &p_path, const PackedData::PackedFil
 	off = pf.offset;
 
 	if (pf.encrypted) {
-		Ref<FileAccessEncrypted> fae;
+		Ref<EncFile> fae;
 		fae.instantiate();
 		ERR_FAIL_COND_MSG(fae.is_null(), vformat("Can't open encrypted pack-referenced file '%s'.", String(pf.pack)));
 
@@ -484,7 +484,7 @@ FileAccessPack::FileAccessPack(const String &p_path, const PackedData::PackedFil
 			key.write[i] = script_encryption_key[i];
 		}
 
-		Error err = fae->open_and_parse(f, key, FileAccessEncrypted::MODE_READ, false);
+		Error err = fae->open_file_parse(f, key, EncFile::MODE_READ, false);
 		ERR_FAIL_COND_MSG(err, vformat("Can't open encrypted pack-referenced file '%s'.", String(pf.pack)));
 		f = fae;
 		off = 0;

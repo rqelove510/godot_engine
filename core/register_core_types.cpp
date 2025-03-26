@@ -478,7 +478,7 @@ void unregister_core_types() {
 	CoreStringNames::free();
 	StringName::cleanup();
 
-	FileAccessEncrypted::deinitialize();
+	EncFile::deinitialize();
 
 	OS::get_singleton()->benchmark_end_measure("Core", "Unregister Types");
 }

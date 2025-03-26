@@ -171,9 +171,9 @@ Error ConfigFile::save_encrypted(const String &p_path, const Vector<uint8_t> &p_
 		return err;
 	}
 
-	Ref<FileAccessEncrypted> fae;
+	Ref<EncFile> fae;
 	fae.instantiate();
-	err = fae->open_and_parse(f, p_key, FileAccessEncrypted::MODE_WRITE_AES256);
+	err = fae->open_file_parse(f, p_key, EncFile::MODE_WRITE_AES256);
 	if (err) {
 		return err;
 	}
@@ -188,9 +188,9 @@ Error ConfigFile::save_encrypted_pass(const String &p_path, const String &p_pass
 		return err;
 	}
 
-	Ref<FileAccessEncrypted> fae;
+	Ref<EncFile> fae;
 	fae.instantiate();
-	err = fae->open_and_parse_password(f, p_pass, FileAccessEncrypted::MODE_WRITE_AES256);
+	err = fae->open_file_parse_pw(f, p_pass, EncFile::MODE_WRITE_AES256);
 	if (err) {
 		return err;
 	}
@@ -239,9 +239,9 @@ Error ConfigFile::load_encrypted(const String &p_path, const Vector<uint8_t> &p_
 		return err;
 	}
 
-	Ref<FileAccessEncrypted> fae;
+	Ref<EncFile> fae;
 	fae.instantiate();
-	err = fae->open_and_parse(f, p_key, FileAccessEncrypted::MODE_READ);
+	err = fae->open_file_parse(f, p_key, EncFile::MODE_READ);
 	if (err) {
 		return err;
 	}
@@ -256,9 +256,9 @@ Error ConfigFile::load_encrypted_pass(const String &p_path, const String &p_pass
 		return err;
 	}
 
-	Ref<FileAccessEncrypted> fae;
+	Ref<EncFile> fae;
 	fae.instantiate();
-	err = fae->open_and_parse_password(f, p_pass, FileAccessEncrypted::MODE_READ);
+	err = fae->open_file_parse_pw(f, p_pass, EncFile::MODE_READ);
 	if (err) {
 		return err;
 	}
