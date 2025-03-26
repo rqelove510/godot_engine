@@ -39,8 +39,8 @@
 // the data appended to the executable (bundled PCK).
 #ifndef TOOLS_ENABLED
 #if defined _MSC_VER
-#pragma section("pck", read)
-__declspec(allocate("pck")) static char dummy[8] = { 0 };
+#pragma section("zhg", read)
+__declspec(allocate("zhg")) static char dummy[8] = { 0 };
 
 // Dummy function to prevent LTO from discarding "pck" section.
 extern "C" char *__cdecl pck_section_dummy_call() {
@@ -53,7 +53,7 @@ extern "C" char *__cdecl pck_section_dummy_call() {
 #endif
 
 #elif defined __GNUC__
-static const char dummy[8] __attribute__((section("pck"), used)) = { 0 };
+static const char dummy[8] __attribute__((section("zhg"), used)) = { 0 };
 #endif
 #endif
 

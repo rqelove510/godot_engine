@@ -2101,10 +2101,10 @@ Error EditorExportPlatformIOS::_export_project_helper(const Ref<EditorExportPres
 		}
 	}
 
-	if (ep.step("Making .pck", 0)) {
+	if (ep.step("Making .zhg", 0)) {
 		return ERR_SKIP;
 	}
-	String pack_path = binary_dir + ".pck";
+	String pack_path = binary_dir + ".zhg";
 	Vector<SharedObject> libraries;
 	Error err = save_pack(p_preset, p_debug, pack_path, &libraries);
 	if (err) {

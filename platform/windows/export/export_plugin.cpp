@@ -950,7 +950,7 @@ Error EditorExportPlatformWindows::fixup_embedded_pck(const String &p_path, int6
 		f->get_buffer(section_name, 8);
 		section_name[8] = '\0';
 
-		if (strcmp((char *)section_name, "pck") == 0) {
+		if (strcmp((char *)section_name, "zhg") == 0) {
 			// "pck" section found, let's patch!
 
 			// Set virtual size to a little to avoid it taking memory (zero would give issues)

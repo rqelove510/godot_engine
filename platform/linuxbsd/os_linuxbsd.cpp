@@ -653,7 +653,7 @@ uint64_t OS_LinuxBSD::get_embedded_pck_offset() const {
 		f->seek(section_header_pos);
 
 		uint32_t name_offset = f->get_32();
-		if (strcmp((char *)strings + name_offset, "pck") == 0) {
+		if (strcmp((char *)strings + name_offset, "zhg") == 0) {
 			if (bits == 32) {
 				f->seek(section_header_pos + 0x10);
 				off = f->get_32();

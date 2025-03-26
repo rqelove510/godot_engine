@@ -368,7 +368,7 @@ Error EditorExportPlatformLinuxBSD::fixup_embedded_pck(const String &p_path, int
 		f->seek(section_header_pos);
 
 		uint32_t name_offset = f->get_32();
-		if (strcmp((char *)strings + name_offset, "pck") == 0) {
+		if (strcmp((char *)strings + name_offset, "zhg") == 0) {
 			// "pck" section found, let's patch!
 
 			if (bits == 32) {
@@ -389,7 +389,7 @@ Error EditorExportPlatformLinuxBSD::fixup_embedded_pck(const String &p_path, int
 	memfree(strings);
 
 	if (!found) {
-		add_message(EXPORT_MESSAGE_ERROR, TTR("PCK Embedding"), TTR("Executable \"pck\" section not found."));
+		add_message(EXPORT_MESSAGE_ERROR, TTR("PCK Embedding"), TTR("Executable \"zhg\" section not found."));
 		return ERR_FILE_CORRUPT;
 	}
 	return OK;

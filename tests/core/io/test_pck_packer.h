@@ -41,7 +41,7 @@ namespace TestPCKPacker {
 
 TEST_CASE("[PCKPacker] Pack an empty PCK file") {
 	PCKPacker pck_packer;
-	const String output_pck_path = TestUtils::get_temp_path("output_empty.pck");
+	const String output_pck_path = TestUtils::get_temp_path("output_empty.zhg");
 	CHECK_MESSAGE(
 			pck_packer.pck_start(output_pck_path) == OK,
 			"Starting a PCK file should return an OK error code.");
@@ -65,7 +65,7 @@ TEST_CASE("[PCKPacker] Pack an empty PCK file") {
 
 TEST_CASE("[PCKPacker] Pack empty with zero alignment invalid") {
 	PCKPacker pck_packer;
-	const String output_pck_path = TestUtils::get_temp_path("output_empty.pck");
+	const String output_pck_path = TestUtils::get_temp_path("output_empty.zhg");
 	ERR_PRINT_OFF;
 	CHECK_MESSAGE(pck_packer.pck_start(output_pck_path, 0) != OK, "PCK with zero alignment should fail.");
 	ERR_PRINT_ON;
@@ -73,7 +73,7 @@ TEST_CASE("[PCKPacker] Pack empty with zero alignment invalid") {
 
 TEST_CASE("[PCKPacker] Pack empty with invalid key") {
 	PCKPacker pck_packer;
-	const String output_pck_path = TestUtils::get_temp_path("output_empty.pck");
+	const String output_pck_path = TestUtils::get_temp_path("output_empty.zhg");
 	ERR_PRINT_OFF;
 	CHECK_MESSAGE(pck_packer.pck_start(output_pck_path, 32, "") != OK, "PCK with invalid key should fail.");
 	ERR_PRINT_ON;
@@ -81,7 +81,7 @@ TEST_CASE("[PCKPacker] Pack empty with invalid key") {
 
 TEST_CASE("[PCKPacker] Pack a PCK file with some files and directories") {
 	PCKPacker pck_packer;
-	const String output_pck_path = TestUtils::get_temp_path("output_with_files.pck");
+	const String output_pck_path = TestUtils::get_temp_path("output_with_files.zhg");
 	CHECK_MESSAGE(
 			pck_packer.pck_start(output_pck_path) == OK,
 			"Starting a PCK file should return an OK error code.");

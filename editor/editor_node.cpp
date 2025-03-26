@@ -1072,7 +1072,7 @@ void EditorNode::_fs_changed() {
 						} else {
 							err = platform->export_zip(export_preset, export_defer.debug, export_path);
 						}
-					} else if (export_path.ends_with(".pck")) {
+					} else if (export_path.ends_with(".zhg")) {
 						if (export_defer.patch) {
 							err = platform->export_pack_patch(export_preset, export_defer.debug, export_path, export_defer.patches);
 						} else {

@@ -608,20 +608,20 @@ Error ProjectSettings::_setup(const String &p_path, const String &p_main_pack, b
 #ifdef MACOS_ENABLED
 		if (!found) {
 			// Attempt to load PCK from macOS .app bundle resources.
-			found = _load_resource_pack(OS::get_singleton()->get_bundle_resource_dir().path_join(exec_basename + ".pck"), false, 0, true) || _load_resource_pack(OS::get_singleton()->get_bundle_resource_dir().path_join(exec_filename + ".pck"), false, 0, true);
+			found = _load_resource_pack(OS::get_singleton()->get_bundle_resource_dir().path_join(exec_basename + ".zhg"), false, 0, true) || _load_resource_pack(OS::get_singleton()->get_bundle_resource_dir().path_join(exec_filename + ".zhg"), false, 0, true);
 		}
 #endif
 
 		if (!found) {
 			// Try to load data pack at the location of the executable.
 			// As mentioned above, we have two potential names to attempt.
-			found = _load_resource_pack(exec_dir.path_join(exec_basename + ".pck"), false, 0, true) || _load_resource_pack(exec_dir.path_join(exec_filename + ".pck"), false, 0, true);
+			found = _load_resource_pack(exec_dir.path_join(exec_basename + ".zhg"), false, 0, true) || _load_resource_pack(exec_dir.path_join(exec_filename + ".zhg"), false, 0, true);
 		}
 
 		if (!found) {
 			// If we couldn't find them next to the executable, we attempt
 			// the current working directory. Same story, two tests.
-			found = _load_resource_pack(exec_basename + ".pck", false, 0, true) || _load_resource_pack(exec_filename + ".pck", false, 0, true);
+			found = _load_resource_pack(exec_basename + ".zhg", false, 0, true) || _load_resource_pack(exec_filename + ".zhg", false, 0, true);
 		}
 
 		// If we opened our package, try and load our project.

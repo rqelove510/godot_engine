@@ -1976,7 +1976,7 @@ Error EditorExportPlatformMacOS::export_project(const Ref<EditorExportPreset> &p
 			};
 		}
 
-		String pack_path = tmp_app_path_name + "/Contents/Resources/" + pkg_name + ".pck";
+		String pack_path = tmp_app_path_name + "/Contents/Resources/" + pkg_name + ".zhg";
 		Vector<SharedObject> shared_objects;
 		err = save_pack(p_preset, p_debug, pack_path, &shared_objects);
 

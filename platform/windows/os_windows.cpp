@@ -2126,7 +2126,7 @@ uint64_t OS_Windows::get_embedded_pck_offset() const {
 		f->get_buffer(section_name, 8);
 		section_name[8] = '\0';
 
-		if (strcmp((char *)section_name, "pck") == 0) {
+		if (strcmp((char *)section_name, "zhg") == 0) {
 			f->seek(section_header_pos + 20);
 			off = f->get_32();
 			break;

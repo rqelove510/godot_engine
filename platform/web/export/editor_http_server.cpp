@@ -242,7 +242,7 @@ EditorHTTPServer::EditorHTTPServer() {
 	mimes["html"] = "text/html";
 	mimes["js"] = "application/javascript";
 	mimes["json"] = "application/json";
-	mimes["pck"] = "application/octet-stream";
+	mimes["zhg"] = "application/octet-stream";
 	mimes["png"] = "image/png";
 	mimes["svg"] = "image/svg";
 	mimes["wasm"] = "application/wasm";

@@ -654,7 +654,7 @@ uint64_t DirAccessPack::get_space_left() {
 }
 
 String DirAccessPack::get_filesystem_type() const {
-	return "PCK";
+	return "ZHG";
 }
 
 DirAccessPack::DirAccessPack() {

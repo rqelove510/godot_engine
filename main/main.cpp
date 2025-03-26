@@ -533,7 +533,7 @@ void Main::print_help(const char *p_binary) {
 	print_help_option("-l, --language <locale>", "Use a specific locale (<locale> being a two-letter code).\n");
 	print_help_option("--path <directory>", "Path to a project (<directory> must contain a \"project.godot\" file).\n");
 	print_help_option("-u, --upwards", "Scan folders upwards for project.godot file.\n");
-	print_help_option("--main-pack <file>", "Path to a pack (.pck) file to load.\n");
+	print_help_option("--main-pack <file>", "Path to a pack (.zhg) file to load.\n");
 #ifdef DISABLE_DEPRECATED
 	print_help_option("--render-thread <mode>", "Render thread mode (\"safe\", \"separate\").\n");
 #else
@@ -646,7 +646,7 @@ void Main::print_help(const char *p_binary) {
 	print_help_option("", "<path> should be absolute or relative to the project directory, and include the filename for the binary (e.g. \"builds/game.exe\").\n");
 	print_help_option("", "The target directory must exist.\n");
 	print_help_option("--export-debug <preset> <path>", "Export the project in debug mode using the given preset and output path. See --export-release description for other considerations.\n", CLI_OPTION_AVAILABILITY_EDITOR);
-	print_help_option("--export-pack <preset> <path>", "Export the project data only using the given preset and output path. The <path> extension determines whether it will be in PCK or ZIP format.\n", CLI_OPTION_AVAILABILITY_EDITOR);
+	print_help_option("--export-pack <preset> <path>", "Export the project data only using the given preset and output path. The <path> extension determines whether it will be in ZHG or ZIP format.\n", CLI_OPTION_AVAILABILITY_EDITOR);
 	print_help_option("--export-patch <preset> <path>", "Export pack with changed files only. See --export-pack description for other considerations.\n", CLI_OPTION_AVAILABILITY_EDITOR);
 	print_help_option("--patches <paths>", "List of patches to use with --export-patch. The list is comma-separated.\n", CLI_OPTION_AVAILABILITY_EDITOR);
 	print_help_option("--install-android-build-template", "Install the Android build template. Used in conjunction with --export-release or --export-debug.\n", CLI_OPTION_AVAILABILITY_EDITOR);
@@ -1870,7 +1870,7 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 #ifdef TOOLS_ENABLED
 		editor = false;
 #else
-		const String error_msg = "Error: Couldn't load project data at path \"" + project_path + "\". Is the .pck file missing?\nIf you've renamed the executable, the associated .pck file should also be renamed to match the executable's name (without the extension).\n";
+		const String error_msg = "Error: Couldn't load project data at path \"" + project_path + "\". Is the .zhg file missing?\nIf you've renamed the executable, the associated .zhg file should also be renamed to match the executable's name (without the extension).\n";
 		OS::get_singleton()->print("%s", error_msg.utf8().get_data());
 		OS::get_singleton()->alert(error_msg);
 
