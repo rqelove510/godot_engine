@@ -258,24 +258,26 @@ bool PackedSourcePCK::try_open_pack(const String &p_path, bool p_replace_files, 
 
 	int64_t pck_start_pos = f->get_position() - 4;
 
-	uint32_t version = f->get_32();
-	uint32_t ver_major = f->get_32();
-	uint32_t ver_minor = f->get_32();
-	f->get_32(); // patch number, not used for validation.
-
-	ERR_FAIL_COND_V_MSG(version != PACK_FORMAT_VERSION, false, vformat("Pack version unsupported: %d.", version));
-	ERR_FAIL_COND_V_MSG(ver_major > GODOT_VERSION_MAJOR || (ver_major == GODOT_VERSION_MAJOR && ver_minor > GODOT_VERSION_MINOR), false, vformat("Pack created with a newer version of the engine: %d.%d.", ver_major, ver_minor));
+	//uint32_t version = f->get_32();
+	//uint32_t ver_major = f->get_32();
+	//uint32_t ver_minor = f->get_32();
+	f->get_64(); // not used for validation.
+	uint32_t format_version = f->get_32();
+	/*ERR_FAIL_COND_V_MSG(version != PACK_FORMAT_VERSION, false, vformat("Pack version unsupported: %d.", version));
+	ERR_FAIL_COND_V_MSG(ver_major > GODOT_VERSION_MAJOR || (ver_major == GODOT_VERSION_MAJOR && ver_minor > GODOT_VERSION_MINOR), false, vformat("Pack created with a newer version of the engine: %d.%d.", ver_major, ver_minor));*/
 
 	uint32_t pack_flags = f->get_32();
+	f->get_32();// not used for validation.
+
 	uint64_t file_base = f->get_64();
 
 	bool enc_directory = (pack_flags & PACK_DIR_ENCRYPTED);
 	bool rel_filebase = (pack_flags & PACK_REL_FILEBASE);
 
-	for (int i = 0; i < 16; i++) {
-		//reserved
-		f->get_32();
-	}
+	//for (int i = 0; i < 16; i++) {
+	//	//reserved
+	//	f->get_32();
+	//}
 
 	int file_count = f->get_32();
 
@@ -293,6 +295,8 @@ bool PackedSourcePCK::try_open_pack(const String &p_path, bool p_replace_files, 
 		for (int i = 0; i < key.size(); i++) {
 			key.write[i] = script_encryption_key[i];
 		}
+
+
 
 		Error err = fae->open_file_parse(f, key, EncFile::MODE_READ, false);
 		ERR_FAIL_COND_V_MSG(err, false, "Can't open encrypted pack directory.");

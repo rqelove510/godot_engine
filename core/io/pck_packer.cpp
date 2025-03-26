@@ -177,11 +177,11 @@ Error ZHGPacker::flush(bool p_verbose) {
 	ERR_FAIL_COND_V_MSG(file.is_null(), ERR_INVALID_PARAMETER, "File must be opened before use.");
 
 	int64_t file_base_ofs = file->get_position();
-	file->store_64(0); // files base
+	file->store_64(0); // files base,补齐16个32
 
-	for (int i = 0; i < 16; i++) {
-		file->store_32(0); // reserved
-	}
+	//for (int i = 0; i < 16; i++) {
+	//	file->store_32(0); // reserved
+	//}
 
 	// write the index
 	file->store_32(uint32_t(files.size()));

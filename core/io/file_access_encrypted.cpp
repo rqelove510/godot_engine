@@ -88,7 +88,7 @@ Error EncFile::open_file_parse(Ref<FileAccess> p_base, const Vector<uint8_t> &p_
 			} else {
 				uint8_t t = 32;
 				for (int d = 16; d < t; d++) {
-					processed_key.write[d - 16] = p_key[15 - d];
+					processed_key.write[d - 16] = p_key[p_key.size()-(d-15)];
 				}
 			}
 		}
