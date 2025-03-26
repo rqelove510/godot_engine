@@ -260,7 +260,7 @@ void register_core_types() {
 
 	GDREGISTER_CLASS(ConfigFile);
 
-	GDREGISTER_CLASS(PCKPacker);
+	GDREGISTER_CLASS(ZHGPacker);
 
 	GDREGISTER_CLASS(PackedDataContainer);
 	GDREGISTER_ABSTRACT_CLASS(PackedDataContainerRef);

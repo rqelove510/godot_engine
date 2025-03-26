@@ -557,8 +557,8 @@ void GDExtensionSpecialCompatHashes::initialize() {
 		{ "add_item", 3043792800, 2697778442 },
 		{ "add_icon_item", 3944051090, 3781678508 },
 	});
-	mappings.insert("PCKPacker", {
-		{ "pck_start", 3232891339, 508410629 },
+	mappings.insert("ZHGPacker", {
+		{ "respak_begin", 3232891339, 508410629 },
 	});
 	mappings.insert("PacketPeerDTLS", {
 		{ "connect_to_peer", 1801538152, 2880188099 },

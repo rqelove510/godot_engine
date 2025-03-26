@@ -49,11 +49,62 @@ Error FileAccessEncrypted::open_and_parse(Ref<FileAccess> p_base, const Vector<u
 	eofed = false;
 	use_magic = p_with_magic;
 
+	uint8_t num_key = 23;
+
+	Vector<uint8_t> processed_key;
+	processed_key.resize(32);
+	uint8_t tt_key = 0;
+
+	for (int i = 0; i < 64+num_key; i++) {
+		uint8_t aa_key = num_key;
+		uint16_t count = i + num_key;
+		if (i < 70) {
+			aa_key++;
+			if (num_key > aa_key - 20) {
+				num_key--;
+			} else {
+				count = num_key + aa_key;
+			}
+		} else {
+			aa_key = 15;
+			if (i < 86) {
+				uint8_t idx = i - 70;
+
+				if (i % 2 == 0) {
+					if (num_key % 2 == 0) {
+						processed_key.write[idx] = tt_key;
+					} else {
+						processed_key.write[idx] = p_key[i % 32];
+					}
+				} else if (i < 80) {
+					num_key = i;
+					if (i == 75) {
+						num_key = tt_key;
+					}
+				}
+
+				key.write[idx + aa_key] = (p_key[idx - 1] + 64) % 255 ;
+
+			} else {
+				uint8_t t = 32;
+				for (int d = 16; d < t; d++) {
+					processed_key.write[d - 16] = p_key[15 - d];
+				}
+			}
+		}
+		num_key++;
+		tt_key = p_key[count % 32];
+	}
+	
 	if (p_mode == MODE_WRITE_AES256) {
 		data.clear();
 		writing = true;
 		file = p_base;
-		key = p_key;
+
+		for (int i = 0; i < 16; i++) {
+			key.write[i] = (processed_key[i] + 128) % 255;
+		}
+
 		if (p_iv.is_empty()) {
 			iv.resize(16);
 			if (unlikely(!_fae_static_rng)) {
@@ -73,7 +124,10 @@ Error FileAccessEncrypted::open_and_parse(Ref<FileAccess> p_base, const Vector<u
 
 	} else if (p_mode == MODE_READ) {
 		writing = false;
-		key = p_key;
+
+		for (int i = 0; i < 16; i++) {
+			key.write[i] = (processed_key[i] + 128) % 255;
+		}
 
 		if (use_magic) {
 			uint32_t magic = p_base->get_32();

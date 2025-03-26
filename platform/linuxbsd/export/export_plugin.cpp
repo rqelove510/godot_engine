@@ -289,7 +289,7 @@ String EditorExportPlatformLinuxBSD::_get_exe_arch(const String &p_path) const {
 }
 
 Error EditorExportPlatformLinuxBSD::fixup_embedded_pck(const String &p_path, int64_t p_embedded_start, int64_t p_embedded_size) {
-	// Patch the header of the "pck" section in the ELF file so that it corresponds to the embedded data.
+	// Patch the header of the "zhg" section in the ELF file so that it corresponds to the embedded data.
 
 	Ref<FileAccess> f = FileAccess::open(p_path, FileAccess::READ_WRITE);
 	if (f.is_null()) {
@@ -360,7 +360,7 @@ Error EditorExportPlatformLinuxBSD::fixup_embedded_pck(const String &p_path, int
 		f->get_buffer(strings, string_data_size);
 	}
 
-	// Search for the "pck" section.
+	// Search for the "zhg" section.
 
 	bool found = false;
 	for (int i = 0; i < num_sections; ++i) {
@@ -369,7 +369,7 @@ Error EditorExportPlatformLinuxBSD::fixup_embedded_pck(const String &p_path, int
 
 		uint32_t name_offset = f->get_32();
 		if (strcmp((char *)strings + name_offset, "zhg") == 0) {
-			// "pck" section found, let's patch!
+			// "zhg" section found, let's patch!
 
 			if (bits == 32) {
 				f->seek(section_header_pos + 0x10);

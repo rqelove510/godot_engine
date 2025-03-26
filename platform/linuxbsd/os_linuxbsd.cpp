@@ -646,7 +646,7 @@ uint64_t OS_LinuxBSD::get_embedded_pck_offset() const {
 		f->get_buffer(strings, string_data_size);
 	}
 
-	// Search for the "pck" section.
+	// Search for the "zhg" section.
 	int64_t off = 0;
 	for (int i = 0; i < num_sections; ++i) {
 		int64_t section_header_pos = section_table_pos + i * section_header_size;

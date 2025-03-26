@@ -46,14 +46,14 @@ static int _get_pad(int p_alignment, int p_n) {
 	return pad;
 }
 
-void PCKPacker::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("pck_start", "pck_path", "alignment", "key", "encrypt_directory"), &PCKPacker::pck_start, DEFVAL(32), DEFVAL("0000000000000000000000000000000000000000000000000000000000000000"), DEFVAL(false));
-	ClassDB::bind_method(D_METHOD("add_file", "target_path", "source_path", "encrypt"), &PCKPacker::add_file, DEFVAL(false));
-	ClassDB::bind_method(D_METHOD("add_file_removal", "target_path"), &PCKPacker::add_file_removal);
-	ClassDB::bind_method(D_METHOD("flush", "verbose"), &PCKPacker::flush, DEFVAL(false));
+void ZHGPacker::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("respak_begin", "pck_path", "alignment", "key", "encrypt_directory"), &ZHGPacker::respak_begin, DEFVAL(32), DEFVAL("0000000000000000000000000000000000000000000000000000000000000000"), DEFVAL(false));
+	ClassDB::bind_method(D_METHOD("add_file", "target_path", "source_path", "encrypt"), &ZHGPacker::add_file, DEFVAL(false));
+	ClassDB::bind_method(D_METHOD("add_file_removal", "target_path"), &ZHGPacker::add_file_removal);
+	ClassDB::bind_method(D_METHOD("flush", "verbose"), &ZHGPacker::flush, DEFVAL(false));
 }
 
-Error PCKPacker::pck_start(const String &p_pck_path, int p_alignment, const String &p_key, bool p_encrypt_directory) {
+Error ZHGPacker::respak_begin(const String &p_pck_path, int p_alignment, const String &p_key, bool p_encrypt_directory) {
 	ERR_FAIL_COND_V_MSG((p_key.is_empty() || !p_key.is_valid_hex_number(false) || p_key.length() != 64), ERR_CANT_CREATE, "Invalid Encryption Key (must be 64 characters long).");
 	ERR_FAIL_COND_V_MSG(p_alignment <= 0, ERR_CANT_CREATE, "Invalid alignment, must be greater then 0.");
 
@@ -90,10 +90,11 @@ Error PCKPacker::pck_start(const String &p_pck_path, int p_alignment, const Stri
 	alignment = p_alignment;
 
 	file->store_32(PACK_HEADER_MAGIC);
+
+	file->store_32(0x24120128);
+	file->store_32(0x64008679);
+
 	file->store_32(PACK_FORMAT_VERSION);
-	file->store_32(GODOT_VERSION_MAJOR);
-	file->store_32(GODOT_VERSION_MINOR);
-	file->store_32(GODOT_VERSION_PATCH);
 
 	uint32_t pack_flags = 0;
 	if (enc_dir) {
@@ -101,13 +102,15 @@ Error PCKPacker::pck_start(const String &p_pck_path, int p_alignment, const Stri
 	}
 	file->store_32(pack_flags); // flags
 
+	file->store_32(0x75153614);
+
 	files.clear();
 	ofs = 0;
 
 	return OK;
 }
 
-Error PCKPacker::add_file_removal(const String &p_target_path) {
+Error ZHGPacker::add_file_removal(const String &p_target_path) {
 	ERR_FAIL_COND_V_MSG(file.is_null(), ERR_INVALID_PARAMETER, "File must be opened before use.");
 
 	File pf;
@@ -125,7 +128,7 @@ Error PCKPacker::add_file_removal(const String &p_target_path) {
 	return OK;
 }
 
-Error PCKPacker::add_file(const String &p_target_path, const String &p_source_path, bool p_encrypt) {
+Error ZHGPacker::add_file(const String &p_target_path, const String &p_source_path, bool p_encrypt) {
 	ERR_FAIL_COND_V_MSG(file.is_null(), ERR_INVALID_PARAMETER, "File must be opened before use.");
 
 	Ref<FileAccess> f = FileAccess::open(p_source_path, FileAccess::READ);
@@ -170,7 +173,7 @@ Error PCKPacker::add_file(const String &p_target_path, const String &p_source_pa
 	return OK;
 }
 
-Error PCKPacker::flush(bool p_verbose) {
+Error ZHGPacker::flush(bool p_verbose) {
 	ERR_FAIL_COND_V_MSG(file.is_null(), ERR_INVALID_PARAMETER, "File must be opened before use.");
 
 	int64_t file_base_ofs = file->get_position();
@@ -277,7 +280,7 @@ Error PCKPacker::flush(bool p_verbose) {
 		count += 1;
 		const int file_num = files.size();
 		if (p_verbose && (file_num > 0)) {
-			print_line(vformat("[%d/%d - %d%%] PCKPacker flush: %s -> %s", count, file_num, float(count) / file_num * 100, files[i].src_path, files[i].path));
+			print_line(vformat("[%d/%d - %d%%] ZHGPacker flush: %s -> %s", count, file_num, float(count) / file_num * 100, files[i].src_path, files[i].path));
 		}
 	}
 

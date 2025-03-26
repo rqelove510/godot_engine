@@ -46,7 +46,7 @@
 #if !defined(TOOLS_ENABLED) && defined(__GNUC__)
 static const char dummy[8] __attribute__((section("zhg"), used)) = { 0 };
 
-// Dummy function to prevent LTO from discarding "pck" section.
+// Dummy function to prevent LTO from discarding "zhg" section.
 extern "C" const char *pck_section_dummy_call() __attribute__((used));
 extern "C" const char *pck_section_dummy_call() {
 	return &dummy[0];

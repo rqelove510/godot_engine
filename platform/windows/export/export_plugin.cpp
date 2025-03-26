@@ -896,7 +896,7 @@ String EditorExportPlatformWindows::_get_exe_arch(const String &p_path) const {
 }
 
 Error EditorExportPlatformWindows::fixup_embedded_pck(const String &p_path, int64_t p_embedded_start, int64_t p_embedded_size) {
-	// Patch the header of the "pck" section in the PE file so that it corresponds to the embedded data
+	// Patch the header of the "zhg" section in the PE file so that it corresponds to the embedded data
 
 	if (p_embedded_size + p_embedded_start >= 0x100000000) { // Check for total executable size
 		add_message(EXPORT_MESSAGE_ERROR, TTR("PCK Embedding"), TTR("Windows executables cannot be >= 4 GiB."));
@@ -937,7 +937,7 @@ Error EditorExportPlatformWindows::fixup_embedded_pck(const String &p_path, int6
 		f->seek(f->get_position() + 2 + opt_header_size);
 	}
 
-	// Search for the "pck" section
+	// Search for the "zhg" section
 
 	int64_t section_table_pos = f->get_position();
 
@@ -951,7 +951,7 @@ Error EditorExportPlatformWindows::fixup_embedded_pck(const String &p_path, int6
 		section_name[8] = '\0';
 
 		if (strcmp((char *)section_name, "zhg") == 0) {
-			// "pck" section found, let's patch!
+			// "zhg" section found, let's patch!
 
 			// Set virtual size to a little to avoid it taking memory (zero would give issues)
 			f->seek(section_header_pos + 8);

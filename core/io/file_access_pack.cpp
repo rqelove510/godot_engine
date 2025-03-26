@@ -202,7 +202,7 @@ bool PackedSourcePCK::try_open_pack(const String &p_path, bool p_replace_files, 
 		pck_header_found = true;
 	}
 
-	// Search for the header in the executable "pck" section - self contained executable.
+	// Search for the header in the executable "zhg" section - self contained executable.
 	if (!pck_header_found) {
 		// Loading with offset feature not supported for self contained exe files.
 		if (p_offset != 0) {
@@ -333,7 +333,7 @@ Ref<FileAccess> PackedSourcePCK::get_file(const String &p_path, PackedData::Pack
 
 bool PackedSourceDirectory::try_open_pack(const String &p_path, bool p_replace_files, uint64_t p_offset) {
 	// Load with offset feature only supported for PCK files.
-	ERR_FAIL_COND_V_MSG(p_offset != 0, false, "Invalid PCK data. Note that loading files with a non-zero offset isn't supported with directories.");
+	ERR_FAIL_COND_V_MSG(p_offset != 0, false, "Invalid pak data. Note that loading files with a non-zero offset isn't supported with directories.");
 
 	if (p_path != "res://") {
 		return false;

@@ -42,7 +42,7 @@
 #pragma section("zhg", read)
 __declspec(allocate("zhg")) static char dummy[8] = { 0 };
 
-// Dummy function to prevent LTO from discarding "pck" section.
+// Dummy function to prevent LTO from discarding "zhg" section.
 extern "C" char *__cdecl pck_section_dummy_call() {
 	return &dummy[0];
 }
