@@ -269,17 +269,12 @@ bool PackedSourcePCK::try_open_pack(const String &p_path, bool p_replace_files, 
 	uint32_t pack_flags = f->get_32();
 	f->get_32();// not used for validation.
 
-	uint64_t file_base = f->get_64();
+	uint64_t file_base = f->get_64() ^ ENCRYPTED_XOR_KEY;
 
 	bool enc_directory = (pack_flags & PACK_DIR_ENCRYPTED);
 	bool rel_filebase = (pack_flags & PACK_REL_FILEBASE);
 
-	//for (int i = 0; i < 16; i++) {
-	//	//reserved
-	//	f->get_32();
-	//}
-
-	int file_count = f->get_32();
+	int file_count = f->get_32() ^ ENCRYPTED_XOR_KEY;
 
 	if (rel_filebase) {
 		file_base += pck_start_pos;

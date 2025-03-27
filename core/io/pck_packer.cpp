@@ -184,7 +184,8 @@ Error ZHGPacker::flush(bool p_verbose) {
 	//}
 
 	// write the index
-	file->store_32(uint32_t(files.size()));
+	uint32_t enc_size = files.size() ^ ENCRYPTED_XOR_KEY;
+	file->store_32(enc_size);
 
 	Ref<EncFile> fae;
 	Ref<FileAccess> fhead = file;
@@ -198,7 +199,7 @@ Error ZHGPacker::flush(bool p_verbose) {
 
 		fhead = fae;
 	}
-
+	
 	for (int i = 0; i < files.size(); i++) {
 		CharString utf8_string = files[i].path.utf8();
 		int string_len = utf8_string.length();
@@ -236,7 +237,7 @@ Error ZHGPacker::flush(bool p_verbose) {
 
 	uint64_t file_base = file->get_position();
 	file->seek(file_base_ofs);
-	file->store_64(file_base); // update files base
+	file->store_64(file_base ^ ENCRYPTED_XOR_KEY); // update files base
 	file->seek(file_base);
 
 	const uint32_t buf_max = 65536;

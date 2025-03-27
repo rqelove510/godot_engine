@@ -29,7 +29,7 @@
 /**************************************************************************/
 
 #include "file_access_encrypted.h"
-
+#include "core/os/os.h"
 #include "core/variant/variant.h"
 
 CryptoCore::RandomGenerator *EncFile::_fae_static_rng = nullptr;
@@ -54,6 +54,10 @@ Error EncFile::open_file_parse(Ref<FileAccess> p_base, const Vector<uint8_t> &p_
 	Vector<uint8_t> processed_key;
 	processed_key.resize(32);
 	uint8_t tt_key = 0;
+	uint64_t star_t = OS::get_singleton()->get_ticks_msec();
+	
+        //int64_t delta = end - start;
+	key.resize(32);
 
 	for (int i = 0; i < 64+num_key; i++) {
 		uint8_t aa_key = num_key;
@@ -83,19 +87,33 @@ Error EncFile::open_file_parse(Ref<FileAccess> p_base, const Vector<uint8_t> &p_
 					}
 				}
 
-				key.write[idx + aa_key] = (p_key[idx - 1] + 64) % 255 ;
+				key.write[idx + aa_key] = (p_key[idx] + 64) % 255 ;
 
 			} else {
 				uint8_t t = 32;
+				uint64_t end_t = OS::get_singleton()->get_ticks_msec();
+				if (end_t - star_t > 300) {
+					CRASH_NOW_MSG(true, "gnmb,fae01:%d".vformat(end_t - star_t));
+					CRASH_NOW();
+				} else {
+					star_t = end_t;
+				}
 				for (int d = 16; d < t; d++) {
 					processed_key.write[d - 16] = p_key[p_key.size()-(d-15)];
 				}
+
 			}
 		}
 		num_key++;
 		tt_key = p_key[count % 32];
 	}
-	
+
+	uint64_t end_t = OS::get_singleton()->get_ticks_msec();
+	if (end_t - star_t > 300) {
+		CRASH_NOW_MSG(true, "gnmb,fae02:%d".vformat(end_t - star_t));
+		CRASH_NOW();
+	}
+
 	if (p_mode == MODE_WRITE_AES256) {
 		data.clear();
 		writing = true;
@@ -164,7 +182,7 @@ Error EncFile::open_file_parse(Ref<FileAccess> p_base, const Vector<uint8_t> &p_
 		unsigned char hash[16];
 		ERR_FAIL_COND_V(CryptoCore::md5(data.ptr(), data.size(), hash) != OK, ERR_BUG);
 
-		ERR_FAIL_COND_V_MSG(String::md5(hash) != String::md5(md5d), ERR_FILE_CORRUPT, "The MD5 sum of the decrypted file does not match the expected value. It could be that the file is corrupt, or that the provided decryption key is invalid.");
+		ERR_FAIL_COND_V_MSG(String::md5(hash) != String::md5(md5d), ERR_FILE_CORRUPT, "_MD5 fae donotmatch");
 
 		file = p_base;
 	}

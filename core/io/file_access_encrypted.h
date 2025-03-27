@@ -34,6 +34,7 @@
 #include "core/io/file_access.h"
 
 #define ENCRYPTED_HEADER_MAGIC 0x43454447
+#define ENCRYPTED_XOR_KEY 0x4da9740f63c7201f
 
 class EncFile : public FileAccess {
 public:
