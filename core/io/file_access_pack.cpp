@@ -258,13 +258,9 @@ bool PackedSourcePCK::try_open_pack(const String &p_path, bool p_replace_files, 
 
 	int64_t pck_start_pos = f->get_position() - 4;
 
-	//uint32_t version = f->get_32();
-	//uint32_t ver_major = f->get_32();
-	//uint32_t ver_minor = f->get_32();
+
 	f->get_64(); // not used for validation.
 	f->get_32(); // format version
-	/*ERR_FAIL_COND_V_MSG(version != PACK_FORMAT_VERSION, false, vformat("Pack version unsupported: %d.", version));
-	ERR_FAIL_COND_V_MSG(ver_major > GODOT_VERSION_MAJOR || (ver_major == GODOT_VERSION_MAJOR && ver_minor > GODOT_VERSION_MINOR), false, vformat("Pack created with a newer version of the engine: %d.%d.", ver_major, ver_minor));*/
 
 	uint32_t pack_flags = f->get_32();
 	f->get_32();// not used for validation.
@@ -283,7 +279,7 @@ bool PackedSourcePCK::try_open_pack(const String &p_path, bool p_replace_files, 
 	if (enc_directory) {
 		Ref<EncFile> fae;
 		fae.instantiate();
-		ERR_FAIL_COND_V_MSG(fae.is_null(), false, "Can't open encrypted pack directory.");
+		//ERR_FAIL_COND_V_MSG(fae.is_null(), false, "Can't open encrypted pack directory.");
 
 		Vector<uint8_t> key;
 		key.resize(32);
@@ -294,7 +290,7 @@ bool PackedSourcePCK::try_open_pack(const String &p_path, bool p_replace_files, 
 
 
 		Error err = fae->open_file_parse(f, key, EncFile::MODE_READ, false);
-		ERR_FAIL_COND_V_MSG(err, false, "Can't open encrypted pack directory.");
+		//ERR_FAIL_COND_V_MSG(err, false, "Can't open encrypted pack directory.");
 		f = fae;
 	}
 
@@ -332,7 +328,7 @@ Ref<FileAccess> PackedSourcePCK::get_file(const String &p_path, PackedData::Pack
 
 bool PackedSourceDirectory::try_open_pack(const String &p_path, bool p_replace_files, uint64_t p_offset) {
 	// Load with offset feature only supported for PCK files.
-	ERR_FAIL_COND_V_MSG(p_offset != 0, false, "Invalid pak data. Note that loading files with a non-zero offset isn't supported with directories.");
+	//ERR_FAIL_COND_V_MSG(p_offset != 0, false, "Invalid pak data. Note that loading files with a non-zero offset isn't supported with directories.");
 
 	if (p_path != "res://") {
 		return false;
@@ -369,7 +365,7 @@ void PackedSourceDirectory::add_directory(const String &p_path, bool p_replace_f
 //////////////////////////////////////////////////////////////////
 
 Error FileAccessPack::open_internal(const String &p_path, int p_mode_flags) {
-	ERR_PRINT("Can't open pack-referenced file.");
+	//ERR_PRINT("Can't open pack-referenced file.");
 	return ERR_UNAVAILABLE;
 }
 
@@ -382,7 +378,7 @@ bool FileAccessPack::is_open() const {
 }
 
 void FileAccessPack::seek(uint64_t p_position) {
-	ERR_FAIL_COND_MSG(f.is_null(), "File must be opened before use.");
+	//ERR_FAIL_COND_MSG(f.is_null(), "File must be opened before use.");
 
 	if (p_position > pf.size) {
 		eof = true;
@@ -467,7 +463,7 @@ void FileAccessPack::close() {
 FileAccessPack::FileAccessPack(const String &p_path, const PackedData::PackedFile &p_file) :
 		pf(p_file),
 		f(FileAccess::open(pf.pack, FileAccess::READ)) {
-	ERR_FAIL_COND_MSG(f.is_null(), vformat("Can't open pack-referenced file '%s'.", String(pf.pack)));
+	//ERR_FAIL_COND_MSG(f.is_null(), vformat("Can't open pack-referenced file '%s'.", String(pf.pack)));
 
 	f->seek(pf.offset);
 	off = pf.offset;
@@ -475,7 +471,7 @@ FileAccessPack::FileAccessPack(const String &p_path, const PackedData::PackedFil
 	if (pf.encrypted) {
 		Ref<EncFile> fae;
 		fae.instantiate();
-		ERR_FAIL_COND_MSG(fae.is_null(), vformat("Can't open encrypted pack-referenced file '%s'.", String(pf.pack)));
+		//ERR_FAIL_COND_MSG(fae.is_null(), vformat("Can't open encrypted pack-referenced file '%s'.", String(pf.pack)));
 
 		Vector<uint8_t> key;
 		key.resize(32);
@@ -484,7 +480,7 @@ FileAccessPack::FileAccessPack(const String &p_path, const PackedData::PackedFil
 		}
 
 		Error err = fae->open_file_parse(f, key, EncFile::MODE_READ, false);
-		ERR_FAIL_COND_MSG(err, vformat("Can't open encrypted pack-referenced file '%s'.", String(pf.pack)));
+		//ERR_FAIL_COND_MSG(err, vformat("Can't open encrypted pack-referenced file '%s'.", String(pf.pack)));
 		f = fae;
 		off = 0;
 	}

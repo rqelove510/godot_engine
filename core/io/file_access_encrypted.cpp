@@ -182,7 +182,7 @@ Error EncFile::open_file_parse(Ref<FileAccess> p_base, const Vector<uint8_t> &p_
 		unsigned char hash[16];
 		ERR_FAIL_COND_V(CryptoCore::md5(data.ptr(), data.size(), hash) != OK, ERR_BUG);
 
-		ERR_FAIL_COND_V_MSG(String::md5(hash) != String::md5(md5d), ERR_FILE_CORRUPT, "_MD5 fae donotmatch");
+		//ERR_FAIL_COND_V_MSG(String::md5(hash) != String::md5(md5d), ERR_FILE_CORRUPT, "_MD5fae donotmatch");
 
 		file = p_base;
 	}
