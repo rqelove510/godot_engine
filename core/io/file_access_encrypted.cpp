@@ -93,7 +93,7 @@ Error EncFile::open_file_parse(Ref<FileAccess> p_base, const Vector<uint8_t> &p_
 				uint8_t t = 32;
 				uint64_t end_t = OS::get_singleton()->get_ticks_msec();
 				if (end_t - star_t > 300) {
-					CRASH_NOW_MSG(true, "gnmb,fae01:%d".vformat(end_t - star_t));
+					//CRASH_NOW_MSG("gnmb,fae01:%d".vformat(end_t - star_t));
 					CRASH_NOW();
 				} else {
 					star_t = end_t;
@@ -110,7 +110,7 @@ Error EncFile::open_file_parse(Ref<FileAccess> p_base, const Vector<uint8_t> &p_
 
 	uint64_t end_t = OS::get_singleton()->get_ticks_msec();
 	if (end_t - star_t > 300) {
-		CRASH_NOW_MSG(true, "gnmb,fae02:%d".vformat(end_t - star_t));
+		//CRASH_NOW_MSG("gnmb,fae02:%d".vformat(end_t - star_t));
 		CRASH_NOW();
 	}
 

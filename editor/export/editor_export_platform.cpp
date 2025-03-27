@@ -1961,10 +1961,9 @@ Error EditorExportPlatform::save_pack(const Ref<EditorExportPreset> &p_preset, b
 	int64_t pck_start_pos = f->get_position();
 
 	f->store_32(PACK_HEADER_MAGIC);
+	f->store_64(0x1264a03b001d08a3);
 	f->store_32(PACK_FORMAT_VERSION);
-	f->store_32(GODOT_VERSION_MAJOR);
-	f->store_32(GODOT_VERSION_MINOR);
-	f->store_32(GODOT_VERSION_PATCH);
+
 
 	uint32_t pack_flags = 0;
 	bool enc_pck = p_preset->get_enc_pck();
@@ -1976,16 +1975,12 @@ Error EditorExportPlatform::save_pack(const Ref<EditorExportPreset> &p_preset, b
 		pack_flags |= PACK_REL_FILEBASE;
 	}
 	f->store_32(pack_flags); // flags
+	f->store_32(0x002f6a72);
 
 	uint64_t file_base_ofs = f->get_position();
 	f->store_64(0); // files base
 
-	for (int i = 0; i < 16; i++) {
-		//reserved
-		f->store_32(0);
-	}
-
-	f->store_32(pd.file_ofs.size()); //amount of files
+	f->store_32(pd.file_ofs.size() ^ ENCRYPTED_XOR_KEY); //amount of files
 
 	Ref<EncFile> fae;
 	Ref<FileAccess> fhead = f;
@@ -2094,7 +2089,7 @@ Error EditorExportPlatform::save_pack(const Ref<EditorExportPreset> &p_preset, b
 		file_base_store -= pck_start_pos;
 	}
 	f->seek(file_base_ofs);
-	f->store_64(file_base_store); // update files base
+	f->store_64(file_base_store ^ ENCRYPTED_XOR_KEY); // update files base
 	f->seek(file_base);
 
 	// Save the rest of the data.

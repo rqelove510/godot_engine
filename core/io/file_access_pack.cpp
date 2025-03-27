@@ -262,7 +262,7 @@ bool PackedSourcePCK::try_open_pack(const String &p_path, bool p_replace_files, 
 	//uint32_t ver_major = f->get_32();
 	//uint32_t ver_minor = f->get_32();
 	f->get_64(); // not used for validation.
-	uint32_t format_version = f->get_32();
+	f->get_32(); // format version
 	/*ERR_FAIL_COND_V_MSG(version != PACK_FORMAT_VERSION, false, vformat("Pack version unsupported: %d.", version));
 	ERR_FAIL_COND_V_MSG(ver_major > GODOT_VERSION_MAJOR || (ver_major == GODOT_VERSION_MAJOR && ver_minor > GODOT_VERSION_MINOR), false, vformat("Pack created with a newer version of the engine: %d.%d.", ver_major, ver_minor));*/
 
