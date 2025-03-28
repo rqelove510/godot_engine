@@ -30,7 +30,7 @@
 
 #pragma once
 
-#include "modules/encint.h"
+#include "modules/register_module_types.h"
 
 void initialize_encint_module(ModuleInitializationLevel p_level);
 void uninitialize_encint_module(ModuleInitializationLevel p_level);

@@ -1,216 +1,81 @@
 #include "encint.h"
 
-CryptoCore::RandomGenerator* EncInt::_fae_static_rng = nullptr;
+int EncInt::_encryption_key = 123456789;
+bool EncInt::_key_initialized = false;
+
 
 EncInt::EncInt(String p_type, int p_initial_value, bool p_validation_enabled) {
-    type = p_type;
-    encryption_key = generate_encryption_key();
-    validation_enabled = p_validation_enabled;
-    set_value(p_initial_value);
+	_type = p_type;
+	_initialize_key();
+	is_validation = p_validation_enabled;
+	set_value(p_initial_value);
 }
 
-EncInt::~EncInt() {
-    // 析构函数，可根据需要添加清理操作
+void EncInt::_initialize_key() {
+	if (!_key_initialized) {
+		static CryptoCore::RandomGenerator rng;
+		if (rng.init() != OK) {
+			ERR_FAIL_MSG("Failed to initialize random number generator");
+		}
+
+		PackedByteArray iv;
+		iv.resize(16);
+		if (rng.get_random_bytes(iv.ptrw(), 16) != OK) {
+			ERR_FAIL_MSG("Failed to generate random bytes");
+		}
+
+		memcpy(&_encryption_key, iv.ptr(), sizeof(int));
+		print_line(vformat("这里生成的密钥是:%d", _encryption_key));
+		_key_initialized = true;
+	}
 }
 
-int EncInt::encrypt(int value) {
-    return value ^ encryption_key;
+int EncInt::_encrypt(int p_value) const {
+	return p_value ^ _encryption_key;
 }
 
-int EncInt::decrypt(int encrypted_value) const {
-    return encrypted_value ^ encryption_key;
+int EncInt::_decrypt(int p_value) const {
+	return p_value ^ _encryption_key;
 }
 
-int EncInt::add_checksum(int value) {
-    int checksum = 0;
-    char* data = reinterpret_cast<char*>(&value);
-    for (size_t i = 0; i < sizeof(int); ++i) {
-        checksum += static_cast<unsigned char>(data[i]);
-    }
-    return checksum;
-}
-
-int EncInt::generate_encryption_key() {
-    PackedByteArray iv;
-    iv.resize(16);
-    if (!_fae_static_rng) {
-        _fae_static_rng = memnew(CryptoCore::RandomGenerator);
-        if (_fae_static_rng->init() != OK) {
-            memdelete(_fae_static_rng);
-            _fae_static_rng = nullptr;
-            ERR_FAIL_V_MSG(0, "Failed to initialize random number generator.");
-        }
-    }
-    Error err = _fae_static_rng->get_random_bytes(iv.ptrw(), 16);
-    ERR_FAIL_COND_V(err != OK, 0);
-
-    int key = 0;
-    memcpy(&key, iv.ptr(), sizeof(int));
-    return key;
+int EncInt::_calculate_checksum(int p_value) const {
+	int checksum = 0;
+	char *data = reinterpret_cast<char *>(&p_value);
+	for (size_t i = 0; i < sizeof(int); ++i) {
+		checksum += static_cast<unsigned char>(data[i]);
+	}
+	return checksum;
 }
 
 int EncInt::get_value() const {
-    int decrypted = decrypt(encrypted_value);
-    if (validation_enabled) {
-        int current_checksum = add_checksum(decrypted);
-        if (current_checksum != add_checksum_value) {
-            emit_signal("validation_failed", decrypted, type);
-        }
-    }
-    return decrypted;
+	int decrypted = _decrypt(_value);
+	int current_checksum = _calculate_checksum(decrypted);
+	print_line(vformat("get_value.原始值:%d, checksum:%d", _value, current_checksum));
+
+	if (current_checksum != _checksum) {
+		const_cast<EncInt *>(this)->emit_signal("validation_failed", decrypted, _type);
+	}
+	return decrypted;
 }
 
 void EncInt::set_value(int p_value) {
-    encrypted_value = encrypt(p_value);
-    if (validation_enabled) {
-        add_checksum_value = add_checksum(p_value);
-    }
-    emit_signal("value_changed", p_value);
+	_value = _encrypt(p_value);
+	_checksum = _calculate_checksum(p_value);
+	emit_signal("value_changed", p_value);
 }
 
-int EncInt::operator+(const EncInt& other) const {
-    int this_value = get_value();
-    int other_value = other.get_value();
-    return this_value + other_value;
+String EncInt::get_type() const {
+	return _type;
 }
 
-int EncInt::operator+(int other) const {
-    int this_value = get_value();
-    return this_value + other;
-}
+void EncInt::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("get_value"), &EncInt::get_value);
+	ClassDB::bind_method(D_METHOD("set_value", "value"), &EncInt::set_value);
+	ClassDB::bind_method(D_METHOD("get_type"), &EncInt::get_type);
 
-float EncInt::operator+(float other) const {
-    int this_value = get_value();
-    return static_cast<float>(this_value) + other;
-}
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "value"), "set_value", "get_value");
+	ADD_PROPERTY(PropertyInfo(Variant::STRING, "type"), "set_type", "get_type");
 
-int EncInt::operator-(const EncInt& other) const {
-    int this_value = get_value();
-    int other_value = other.get_value();
-    return this_value - other_value;
-}
-
-int EncInt::operator-(int other) const {
-    int this_value = get_value();
-    return this_value - other;
-}
-
-float EncInt::operator-(float other) const {
-    int this_value = get_value();
-    return static_cast<float>(this_value) - other;
-}
-
-int EncInt::operator*(const EncInt& other) const {
-    int this_value = get_value();
-    int other_value = other.get_value();
-    return this_value * other_value;
-}
-
-int EncInt::operator*(int other) const {
-    int this_value = get_value();
-    return this_value * other;
-}
-
-float EncInt::operator*(float other) const {
-    int this_value = get_value();
-    return static_cast<float>(this_value) * other;
-}
-
-int EncInt::operator/(const EncInt& other) const {
-    int this_value = get_value();
-    int other_value = other.get_value();
-    if (other_value == 0) {
-        // 处理除零错误
-        return this_value;
-    }
-    return this_value / other_value;
-}
-
-int EncInt::operator/(int other) const {
-    int this_value = get_value();
-    if (other == 0) {
-        // 处理除零错误
-        return this_value;
-    }
-    return this_value / other;
-}
-
-float EncInt::operator/(float other) const {
-    int this_value = get_value();
-    if (other == 0.0f) {
-        // 处理除零错误
-        return static_cast<float>(this_value);
-    }
-    return static_cast<float>(this_value) / other;
-}
-
-EncInt& EncInt::operator+=(const EncInt& other) {
-    int this_value = get_value();
-    int other_value = other.get_value();
-    set_value(this_value + other_value);
-    return *this;
-}
-
-EncInt& EncInt::operator+=(int other) {
-    int this_value = get_value();
-    set_value(this_value + other);
-    return *this;
-}
-
-EncInt& EncInt::operator+=(float other) {
-    int this_value = get_value();
-    int result = static_cast<int>(this_value + other);
-    set_value(result);
-    return *this;
-}
-
-EncInt& EncInt::operator-=(const EncInt& other) {
-    int this_value = get_value();
-    int other_value = other.get_value();
-    set_value(this_value - other_value);
-    return *this;
-}
-
-EncInt& EncInt::operator-=(int other) {
-    int this_value = get_value();
-    set_value(this_value - other);
-    return *this;
-}
-
-EncInt& EncInt::operator-=(float other) {
-    int this_value = get_value();
-    int result = static_cast<int>(this_value - other);
-    set_value(result);
-    return *this;
-}
-
-int EncInt::operator%(int other) const {
-    int this_value = get_value();
-    if (other == 0) {
-        // 处理除零错误
-        return this_value;
-    }
-    return this_value % other;
-}
-
-EncInt::operator int() const {
-    return get_value();
-}
-
-EncInt& EncInt::operator=(int p_value) {
-    set_value(p_value);
-    return *this;
-}
-
-EncInt& EncInt::operator=(float p_value) {
-    set_value(static_cast<int>(p_value));
-    return *this;
-}
-
-void EncInt::_notification(int p_what) {
-    switch (p_what) {
-        case NOTIFICATION_POSTINITIALIZE:
-            // 初始化后可添加额外操作
-            break;
-    }
+	ADD_SIGNAL(MethodInfo("value_changed", PropertyInfo(Variant::INT, "value")));
+	ADD_SIGNAL(MethodInfo("validation_failed", PropertyInfo(Variant::INT, "new_value"), PropertyInfo(Variant::STRING, "type")));
 }
