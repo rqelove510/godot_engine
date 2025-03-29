@@ -41,6 +41,7 @@ void initialize_encint_module(ModuleInitializationLevel p_level) {
 	}
 
 	ClassDB::register_class<EncInt>();
+
 }
 
 void uninitialize_encint_module(ModuleInitializationLevel p_level) {
