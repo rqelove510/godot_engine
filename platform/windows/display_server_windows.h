@@ -469,6 +469,9 @@ class DisplayServerWindows : public DisplayServer {
 
 		Vector<Vector2> mpath;
 
+		DWORD saved_style = 0;
+		DWORD saved_ex_style = 0;
+
 		bool create_completed = false;
 		bool pre_fs_valid = false;
 		RECT pre_fs_rect;
@@ -640,6 +643,8 @@ class DisplayServerWindows : public DisplayServer {
 
 	Callable system_theme_changed;
 
+	RenderingServer *rendering_server;
+
 	void _drag_event(WindowID p_window, float p_x, float p_y, int idx);
 	void _touch_event(WindowID p_window, bool p_pressed, float p_x, float p_y, int idx);
 
@@ -755,6 +760,9 @@ public:
 	virtual WindowID create_sub_window(WindowMode p_mode, VSyncMode p_vsync_mode, uint32_t p_flags, const Rect2i &p_rect = Rect2i(), bool p_exclusive = false, WindowID p_transient_parent = INVALID_WINDOW_ID) override;
 	virtual void show_window(WindowID p_window) override;
 	virtual void delete_sub_window(WindowID p_window) override;
+
+	virtual void window_true_hide(bool disable_render = true) override;
+	virtual void window_true_hide_back() override;
 
 	virtual WindowID window_get_active_popup() const override;
 	virtual void window_set_popup_safe_rect(WindowID p_window, const Rect2i &p_rect) override;

@@ -62,6 +62,9 @@
 #include <wbemcli.h>
 #include <wincrypt.h>
 
+#include <windows.h>
+#include <iphlpapi.h>
+
 #if defined(RD_ENABLED)
 #include "servers/rendering/rendering_device.h"
 #endif
@@ -1549,6 +1552,51 @@ Error OS_Windows::kill(const ProcessID &p_pid) {
 
 int OS_Windows::get_process_id() const {
 	return _getpid();
+}
+
+String OS_Windows::get_mac_address() const {
+	ULONG outBufLen = sizeof(IP_ADAPTER_INFO);
+	IP_ADAPTER_INFO *pAdapterInfo = (IP_ADAPTER_INFO *)malloc(outBufLen);
+	if (pAdapterInfo == nullptr) {
+		return "";
+	}
+
+	// 尝试获取适配器信息
+	if (GetAdaptersInfo(pAdapterInfo, &outBufLen) == ERROR_BUFFER_OVERFLOW) {
+		free(pAdapterInfo);
+		pAdapterInfo = (IP_ADAPTER_INFO *)malloc(outBufLen);
+		if (pAdapterInfo == nullptr) {
+			return "";
+		}
+	}
+
+	if (GetAdaptersInfo(pAdapterInfo, &outBufLen) == NO_ERROR) {
+		IP_ADAPTER_INFO *pAdapter = pAdapterInfo;
+		while (pAdapter) {
+			if (pAdapter->AddressLength > 0) {
+				char mac[18];
+				int written = 0;
+				for (UINT i = 0; i < pAdapter->AddressLength; i++) {
+					if (i > 0) {
+						written += sprintf(mac + written, "-");
+					}
+					written += sprintf(mac + written, "%02X", (int)pAdapter->Address[i]);
+				}
+				free(pAdapterInfo);
+				return String(mac);
+			}
+			pAdapter = pAdapter->Next;
+		}
+	}
+
+	free(pAdapterInfo);
+	return "";
+}
+
+String OS_Windows::get_hard_drive_serial_number() const {
+	DWORD serial = 0;
+	GetVolumeInformationA("C:\\", nullptr, 0, &serial, nullptr, nullptr, nullptr, 0);
+	return String::num_int64(serial, 16).to_upper();
 }
 
 bool OS_Windows::is_process_running(const ProcessID &p_pid) const {

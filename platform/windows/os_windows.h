@@ -208,6 +208,9 @@ public:
 	virtual bool is_process_running(const ProcessID &p_pid) const override;
 	virtual int get_process_exit_code(const ProcessID &p_pid) const override;
 
+	virtual String get_mac_address() const override;
+	virtual String get_hard_drive_serial_number() const override;
+
 	virtual bool has_environment(const String &p_var) const override;
 	virtual String get_environment(const String &p_var) const override;
 	virtual void set_environment(const String &p_var, const String &p_value) const override;

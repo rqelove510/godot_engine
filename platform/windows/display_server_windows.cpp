@@ -2220,6 +2220,46 @@ Size2i DisplayServerWindows::window_get_min_size(WindowID p_window) const {
 	return wd.min_size;
 }
 
+
+// 修改 window_true_hide 和 window_true_hide_back 方法
+void DisplayServerWindows::window_true_hide(bool disable_render) {
+	WindowData *wd = &windows[MAIN_WINDOW_ID];
+	if (!wd->hWnd) {
+		return;
+	}
+	// 隐藏窗口
+	ShowWindow(wd->hWnd, SW_HIDE);
+	UpdateWindow(wd->hWnd);
+
+	// 禁用渲染逻辑
+	if (disable_render && rendering_server) {
+		// 暂停渲染线程
+		rendering_server->set_render_loop_enabled(false);
+
+	}
+}
+
+void DisplayServerWindows::window_true_hide_back() {
+	WindowData *wd = &windows[MAIN_WINDOW_ID];
+	if (!wd->hWnd) {
+		return;
+	}
+
+	// 恢复窗口显示状态
+	ShowWindow(wd->hWnd, SW_SHOW);
+	UpdateWindow(wd->hWnd);
+
+	// 恢复渲染逻辑
+	if (rendering_server) {
+		rendering_server->set_render_loop_enabled(true);
+
+	}
+
+	// 重新获取焦点
+	SetForegroundWindow(wd->hWnd);
+	SetFocus(wd->hWnd);
+}
+
 void DisplayServerWindows::window_set_size(const Size2i p_size, WindowID p_window) {
 	_THREAD_SAFE_METHOD_
 
@@ -6616,6 +6656,7 @@ DisplayServerWindows::DisplayServerWindows(const String &p_rendering_driver, Win
 	key_event_pos = 0;
 
 	hInstance = static_cast<OS_Windows *>(OS::get_singleton())->get_hinstance();
+	rendering_server = RenderingServer::get_singleton();
 
 	pressrc = 0;
 	old_invalid = true;
@@ -6802,7 +6843,7 @@ DisplayServerWindows::DisplayServerWindows(const String &p_rendering_driver, Win
 	wc.hbrBackground = nullptr;
 	wc.lpszMenuName = nullptr;
 	wc.lpszClassName = L"Engine";
-
+	
 	if (!RegisterClassExW(&wc)) {
 		r_error = ERR_UNAVAILABLE;
 		return;
@@ -7045,6 +7086,14 @@ DisplayServerWindows::DisplayServerWindows(const String &p_rendering_driver, Win
 	if (main_window == INVALID_WINDOW_ID) {
 		r_error = ERR_UNAVAILABLE;
 		ERR_FAIL_MSG("Failed to create main window.");
+	}
+
+
+	// 初始化样式保存
+	HWND hWnd = windows[MAIN_WINDOW_ID].hWnd;
+	if (hWnd) {
+		windows[MAIN_WINDOW_ID].saved_style = GetWindowLong(hWnd, GWL_STYLE);
+		windows[MAIN_WINDOW_ID].saved_ex_style = GetWindowLong(hWnd, GWL_EXSTYLE);
 	}
 
 	joypad = new JoypadWindows(&windows[MAIN_WINDOW_ID].hWnd);

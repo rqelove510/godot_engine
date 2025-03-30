@@ -175,6 +175,14 @@ int OS::get_process_id() const {
 	return -1;
 }
 
+String OS::get_mac_address() const {
+	return "";
+}
+
+String OS::get_hard_drive_serial_number() const {
+	return "";
+}
+
 bool OS::is_stdout_verbose() const {
 	return _verbose_stdout;
 }

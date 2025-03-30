@@ -602,6 +602,12 @@ DisplayServer::WindowID DisplayServer::create_sub_window(WindowMode p_mode, VSyn
 	ERR_FAIL_V_MSG(INVALID_WINDOW_ID, "Sub-windows not supported by this display server.");
 }
 
+//void DisplayServer::window_true_hide(bool disable_render) {
+//}
+//
+//void DisplayServer::window_true_hide_back() {
+//}
+
 void DisplayServer::show_window(WindowID p_id) {
 	ERR_FAIL_MSG("Sub-windows not supported by this display server.");
 }
@@ -963,6 +969,9 @@ void DisplayServer::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("window_get_active_popup"), &DisplayServer::window_get_active_popup);
 	ClassDB::bind_method(D_METHOD("window_set_popup_safe_rect", "window", "rect"), &DisplayServer::window_set_popup_safe_rect);
 	ClassDB::bind_method(D_METHOD("window_get_popup_safe_rect", "window"), &DisplayServer::window_get_popup_safe_rect);
+
+	ClassDB::bind_method(D_METHOD("window_true_hide", "disable_render"), &DisplayServer::window_true_hide);
+	ClassDB::bind_method(D_METHOD("window_true_hide_back"), &DisplayServer::window_true_hide_back);
 
 	ClassDB::bind_method(D_METHOD("window_set_title", "title", "window_id"), &DisplayServer::window_set_title, DEFVAL(MAIN_WINDOW_ID));
 	ClassDB::bind_method(D_METHOD("window_get_title_size", "title", "window_id"), &DisplayServer::window_get_title_size, DEFVAL(MAIN_WINDOW_ID));

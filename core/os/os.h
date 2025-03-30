@@ -40,6 +40,7 @@
 
 #include <stdlib.h>
 
+
 class OS {
 	static OS *singleton;
 	static uint64_t target_ticks;
@@ -197,6 +198,9 @@ public:
 	virtual bool is_process_running(const ProcessID &p_pid) const = 0;
 	virtual int get_process_exit_code(const ProcessID &p_pid) const = 0;
 	virtual void vibrate_handheld(int p_duration_ms = 500, float p_amplitude = -1.0) {}
+
+	virtual String get_mac_address() const;
+	virtual String get_hard_drive_serial_number() const;
 
 	virtual Error shell_open(const String &p_uri);
 	virtual Error shell_show_in_file_manager(String p_path, bool p_open_folder = true);

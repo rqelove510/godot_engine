@@ -253,7 +253,7 @@ Error EditorExportPlatformWeb::_build_pwa(const Ref<EditorExportPreset> &p_prese
 	// Heavy files that are cached on demand.
 	Array opt_cache_files = {
 		name + ".wasm",
-		name + ".pck"
+		name + ".zhg"
 	};
 	if (extensions) {
 		opt_cache_files.push_back(name + ".side.wasm");

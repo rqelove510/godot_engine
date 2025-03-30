@@ -394,6 +394,16 @@ int OS::get_process_id() const {
 	return ::OS::get_singleton()->get_process_id();
 }
 
+String OS::get_mac_address() const {
+	return ::OS::get_singleton()->get_mac_address();
+}
+
+
+String OS::get_hard_drive_serial_number() const {
+	return ::OS::get_singleton()->get_hard_drive_serial_number();
+}
+
+
 bool OS::has_environment(const String &p_var) const {
 	return ::OS::get_singleton()->has_environment(p_var);
 }
@@ -674,6 +684,10 @@ void OS::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_process_exit_code", "pid"), &OS::get_process_exit_code);
 	ClassDB::bind_method(D_METHOD("get_process_id"), &OS::get_process_id);
 
+	ClassDB::bind_method(D_METHOD("get_mac_address"), &OS::get_mac_address);
+	ClassDB::bind_method(D_METHOD("get_hard_drive_serial_number"), &OS::get_hard_drive_serial_number);
+
+	
 	ClassDB::bind_method(D_METHOD("has_environment", "variable"), &OS::has_environment);
 	ClassDB::bind_method(D_METHOD("get_environment", "variable"), &OS::get_environment);
 	ClassDB::bind_method(D_METHOD("set_environment", "variable", "value"), &OS::set_environment);

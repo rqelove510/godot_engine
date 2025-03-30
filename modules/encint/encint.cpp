@@ -1,6 +1,4 @@
 #include "encint.h"
-//#include <functional>
-//#include <random>
 
 // 初始化全局 key
 int64_t EncInt::_global_key = []() {
