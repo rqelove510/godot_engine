@@ -45,7 +45,7 @@ const char *error_names[] = {
 	"File: Bad path", // ERR_FILE_BAD_PATH
 	"File: Permission denied", // ERR_FILE_NO_PERMISSION
 	"File already in use", // ERR_FILE_ALREADY_IN_USE
-	"Can't open file", // ERR_FILE_CANT_OPEN
+	"faild with opf", // ERR_FILE_CANT_OPEN
 	"Can't write file", // ERR_FILE_CANT_WRITE
 	"Can't read file", // ERR_FILE_CANT_READ
 	"File unrecognized", // ERR_FILE_UNRECOGNIZED

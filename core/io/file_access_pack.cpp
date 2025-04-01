@@ -206,7 +206,7 @@ bool PackedSourcePCK::try_open_pack(const String &p_path, bool p_replace_files, 
 	if (!pck_header_found) {
 		// Loading with offset feature not supported for self contained exe files.
 		if (p_offset != 0) {
-			ERR_FAIL_V_MSG(false, "Loading self-contained executable with offset not supported.");
+			ERR_FAIL_V_MSG(false, "lselfcontext_faild.");
 		}
 
 		int64_t pck_off = OS::get_singleton()->get_embedded_pck_offset();
@@ -217,7 +217,7 @@ bool PackedSourcePCK::try_open_pack(const String &p_path, bool p_replace_files, 
 				magic = f->get_32();
 				if (magic == PACK_HEADER_MAGIC) {
 #ifdef DEBUG_ENABLED
-					print_verbose("PCK header found in executable pck section, loading from offset 0x" + String::num_int64(pck_off - 4, 16));
+					print_verbose("lselfcontext_find" + String::num_int64(pck_off - 4, 16));
 #endif
 					pck_header_found = true;
 					break;
@@ -231,7 +231,7 @@ bool PackedSourcePCK::try_open_pack(const String &p_path, bool p_replace_files, 
 	if (!pck_header_found) {
 		// Loading with offset feature not supported for self contained exe files.
 		if (p_offset != 0) {
-			ERR_FAIL_V_MSG(false, "Loading self-contained executable with offset not supported.");
+			ERR_FAIL_V_MSG(false, "Lsc with offset not supported.");
 		}
 
 		f->seek_end();
@@ -245,7 +245,7 @@ bool PackedSourcePCK::try_open_pack(const String &p_path, bool p_replace_files, 
 			magic = f->get_32();
 			if (magic == PACK_HEADER_MAGIC) {
 #ifdef DEBUG_ENABLED
-				print_verbose("PCK header found at the end of executable, loading from offset 0x" + String::num_int64(f->get_position() - 4, 16));
+				print_verbose("pkendfind offset 0x" + String::num_int64(f->get_position() - 4, 16));
 #endif
 				pck_header_found = true;
 			}
@@ -265,12 +265,12 @@ bool PackedSourcePCK::try_open_pack(const String &p_path, bool p_replace_files, 
 	uint32_t pack_flags = f->get_32();
 	f->get_32();// not used for validation.
 
-	uint64_t file_base = f->get_64() ^ ENCRYPTED_XOR_KEY;
+	uint64_t file_base = (f->get_64() ^ ENCRYPTED_XOR_KEY) - 0x7b1234;
 
 	bool enc_directory = (pack_flags & PACK_DIR_ENCRYPTED);
 	bool rel_filebase = (pack_flags & PACK_REL_FILEBASE);
 
-	int file_count = f->get_32() ^ ENCRYPTED_XOR_KEY;
+	int file_count = (f->get_32() ^ ENCRYPTED_XOR_KEY)- 0x1a2b5678;
 
 	if (rel_filebase) {
 		file_base += pck_start_pos;
@@ -287,9 +287,10 @@ bool PackedSourcePCK::try_open_pack(const String &p_path, bool p_replace_files, 
 			key.write[i] = script_encryption_key[i];
 		}
 
-
-
 		Error err = fae->open_file_parse(f, key, EncFile::MODE_READ, false);
+		if (err != OK) {
+			return false;
+		}
 		//ERR_FAIL_COND_V_MSG(err, false, "Can't open encrypted pack directory.");
 		f = fae;
 	}

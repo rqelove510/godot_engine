@@ -816,7 +816,7 @@ Vector<uint8_t> FileAccess::get_file_as_bytes(const String &p_path, Error *r_err
 		if (r_error) { // if error requested, do not throw error
 			return Vector<uint8_t>();
 		}
-		ERR_FAIL_V_MSG(Vector<uint8_t>(), vformat("Can't open file from path '%s'.", String(p_path)));
+		ERR_FAIL_V_MSG(Vector<uint8_t>(), vformat("faild with opf from path '%s'.", String(p_path)));
 	}
 	Vector<uint8_t> data;
 	data.resize(f->get_length());

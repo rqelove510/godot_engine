@@ -85,7 +85,7 @@ Error ZHGPacker::respak_begin(const String &p_pck_path, int p_alignment, const S
 	enc_dir = p_encrypt_directory;
 
 	file = FileAccess::open(p_pck_path, FileAccess::WRITE);
-	ERR_FAIL_COND_V_MSG(file.is_null(), ERR_CANT_CREATE, vformat("Can't open file to write: '%s'.", String(p_pck_path)));
+	ERR_FAIL_COND_V_MSG(file.is_null(), ERR_CANT_CREATE, vformat("faild with opf to write: '%s'.", String(p_pck_path)));
 
 	alignment = p_alignment;
 
@@ -177,14 +177,9 @@ Error ZHGPacker::flush(bool p_verbose) {
 	ERR_FAIL_COND_V_MSG(file.is_null(), ERR_INVALID_PARAMETER, "File must be opened before use.");
 
 	int64_t file_base_ofs = file->get_position();
-	file->store_64(0); // files base,补齐16个32
+	file->store_64(0);
 
-	//for (int i = 0; i < 16; i++) {
-	//	file->store_32(0); // reserved
-	//}
-
-	// write the index
-	uint32_t enc_size = files.size() ^ ENCRYPTED_XOR_KEY;
+	uint32_t enc_size = files.size() + 0x1a2b5678 ^ ENCRYPTED_XOR_KEY;
 	file->store_32(enc_size);
 
 	Ref<EncFile> fae;
@@ -237,7 +232,7 @@ Error ZHGPacker::flush(bool p_verbose) {
 
 	uint64_t file_base = file->get_position();
 	file->seek(file_base_ofs);
-	file->store_64(file_base ^ ENCRYPTED_XOR_KEY); // update files base
+	file->store_64(file_base + 0x7b1234 ^ ENCRYPTED_XOR_KEY); // update files base
 	file->seek(file_base);
 
 	const uint32_t buf_max = 65536;

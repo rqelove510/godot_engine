@@ -202,14 +202,14 @@ void EditorExportPlatformLinuxBSD::get_export_options(List<ExportOption> *r_opti
 
 bool EditorExportPlatformLinuxBSD::is_elf(const String &p_path) const {
 	Ref<FileAccess> fb = FileAccess::open(p_path, FileAccess::READ);
-	ERR_FAIL_COND_V_MSG(fb.is_null(), false, vformat("Can't open file: \"%s\".", p_path));
+	ERR_FAIL_COND_V_MSG(fb.is_null(), false, vformat("faild with opf: \"%s\".", p_path));
 	uint32_t magic = fb->get_32();
 	return (magic == 0x464c457f);
 }
 
 bool EditorExportPlatformLinuxBSD::is_shebang(const String &p_path) const {
 	Ref<FileAccess> fb = FileAccess::open(p_path, FileAccess::READ);
-	ERR_FAIL_COND_V_MSG(fb.is_null(), false, vformat("Can't open file: \"%s\".", p_path));
+	ERR_FAIL_COND_V_MSG(fb.is_null(), false, vformat("faild with opf: \"%s\".", p_path));
 	uint16_t magic = fb->get_16();
 	return (magic == 0x2123);
 }

@@ -576,7 +576,7 @@ bool ExportTemplateManager::_install_file_selected(const String &p_file, bool p_
 		if (f.is_null()) {
 			ret = unzGoToNextFile(pkg);
 			fc++;
-			ERR_CONTINUE_MSG(true, "Can't open file from path '" + String(to_write) + "'.");
+			ERR_CONTINUE_MSG(true, "faild with opf from path '" + String(to_write) + "'.");
 		}
 
 		f->store_buffer(uncomp_data.ptr(), uncomp_data.size());

@@ -1483,7 +1483,7 @@ Error EditorExportPlatformMacOS::_create_dmg(const String &p_dmg_path, const Str
 
 bool EditorExportPlatformMacOS::is_shebang(const String &p_path) const {
 	Ref<FileAccess> fb = FileAccess::open(p_path, FileAccess::READ);
-	ERR_FAIL_COND_V_MSG(fb.is_null(), false, vformat("Can't open file: \"%s\".", p_path));
+	ERR_FAIL_COND_V_MSG(fb.is_null(), false, vformat("faild with opf: \"%s\".", p_path));
 	uint16_t magic = fb->get_16();
 	return (magic == 0x2123);
 }

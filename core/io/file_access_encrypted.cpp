@@ -42,7 +42,7 @@ void EncFile::deinitialize() {
 }
 
 Error EncFile::open_file_parse(Ref<FileAccess> p_base, const Vector<uint8_t> &p_key, Mode p_mode, bool p_with_magic, const Vector<uint8_t> &p_iv) {
-	ERR_FAIL_COND_V_MSG(file.is_valid(), ERR_ALREADY_IN_USE, vformat("Can't open file while another file from path '%s' is open.", file->get_path_absolute()));
+	ERR_FAIL_COND_V_MSG(file.is_valid(), ERR_ALREADY_IN_USE, vformat("res_idx_4105", file->get_path_absolute()));
 	ERR_FAIL_COND_V(p_key.size() != 32, ERR_INVALID_PARAMETER);
 
 	pos = 0;
@@ -130,7 +130,7 @@ Error EncFile::open_file_parse(Ref<FileAccess> p_base, const Vector<uint8_t> &p_
 				if (_fae_static_rng->init() != OK) {
 					memdelete(_fae_static_rng);
 					_fae_static_rng = nullptr;
-					ERR_FAIL_V_MSG(FAILED, "Failed to initialize random number generator.");
+					ERR_FAIL_V_MSG(FAILED, "res_idx_4105.");
 				}
 			}
 			Error err = _fae_static_rng->get_random_bytes(iv.ptrw(), 16);
@@ -293,7 +293,7 @@ bool EncFile::eof_reached() const {
 }
 
 uint64_t EncFile::get_buffer(uint8_t *p_dst, uint64_t p_length) const {
-	ERR_FAIL_COND_V_MSG(writing, -1, "File has not been opened in read mode.");
+	ERR_FAIL_COND_V_MSG(writing, -1, "res_idx_4104.");
 
 	if (!p_length) {
 		return 0;
@@ -318,7 +318,7 @@ Error EncFile::get_error() const {
 }
 
 bool EncFile::store_buffer(const uint8_t *p_src, uint64_t p_length) {
-	ERR_FAIL_COND_V_MSG(!writing, false, "File has not been opened in write mode.");
+	ERR_FAIL_COND_V_MSG(!writing, false, "res_idx_4103.");
 
 	if (!p_length) {
 		return true;
@@ -337,7 +337,7 @@ bool EncFile::store_buffer(const uint8_t *p_src, uint64_t p_length) {
 }
 
 void EncFile::flush() {
-	ERR_FAIL_COND_MSG(!writing, "File has not been opened in write mode.");
+	ERR_FAIL_COND_MSG(!writing, "res_idx_4102.");
 
 	// encrypted files keep data in memory till close()
 }

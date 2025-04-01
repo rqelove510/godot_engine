@@ -1300,7 +1300,7 @@ Error EditorExportPlatform::export_project_files(const Ref<EditorExportPreset> &
 			config.instantiate();
 			err = config->load(path + ".import");
 			if (err != OK) {
-				ERR_PRINT("Could not parse: '" + path + "', not exported.");
+				ERR_PRINT("pass faild with : '" + path + "', not exported.");
 				continue;
 			}
 
@@ -1622,7 +1622,7 @@ Error EditorExportPlatform::export_project_files(const Ref<EditorExportPreset> &
 Vector<uint8_t> EditorExportPlatform::_filter_extension_list_config_file(const String &p_config_path, const HashSet<String> &p_paths) {
 	Ref<FileAccess> f = FileAccess::open(p_config_path, FileAccess::READ);
 	if (f.is_null()) {
-		ERR_FAIL_V_MSG(Vector<uint8_t>(), "Can't open file from path '" + String(p_config_path) + "'.");
+		ERR_FAIL_V_MSG(Vector<uint8_t>(), "faild with opf from path '" + String(p_config_path) + "'.");
 	}
 	Vector<uint8_t> data;
 	while (!f->eof_reached()) {
@@ -1896,7 +1896,7 @@ Error EditorExportPlatform::save_pack(const Ref<EditorExportPreset> &p_preset, b
 	String tmppath = EditorPaths::get_singleton()->get_temp_dir().path_join("packtmp");
 	Ref<FileAccess> ftmp = FileAccess::open(tmppath, FileAccess::WRITE);
 	if (ftmp.is_null()) {
-		add_message(EXPORT_MESSAGE_ERROR, TTR("Save PCK"), vformat(TTR("Cannot create file \"%s\"."), tmppath));
+		add_message(EXPORT_MESSAGE_ERROR, TTR("Save bao"), vformat(TTR("Cannot create file \"%s\"."), tmppath));
 		return ERR_CANT_CREATE;
 	}
 
@@ -1913,13 +1913,13 @@ Error EditorExportPlatform::save_pack(const Ref<EditorExportPreset> &p_preset, b
 
 	if (err != OK) {
 		DirAccess::remove_file_or_error(tmppath);
-		add_message(EXPORT_MESSAGE_ERROR, TTR("Save PCK"), TTR("Failed to export project files."));
+		add_message(EXPORT_MESSAGE_ERROR, TTR("Save bao"), TTR("Failed to export project files."));
 		return err;
 	}
 
 	if (pd.file_ofs.is_empty()) {
 		DirAccess::remove_file_or_error(tmppath);
-		add_message(EXPORT_MESSAGE_ERROR, TTR("Save PCK"), TTR("No files or changes to export."));
+		add_message(EXPORT_MESSAGE_ERROR, TTR("Save bao"), TTR("No files or changes to export."));
 		return FAILED;
 	}
 
@@ -1932,7 +1932,7 @@ Error EditorExportPlatform::save_pack(const Ref<EditorExportPreset> &p_preset, b
 		f = FileAccess::open(p_path, FileAccess::WRITE);
 		if (f.is_null()) {
 			DirAccess::remove_file_or_error(tmppath);
-			add_message(EXPORT_MESSAGE_ERROR, TTR("Save PCK"), vformat(TTR("Can't open file for writing at path \"%s\"."), p_path));
+			add_message(EXPORT_MESSAGE_ERROR, TTR("Save bao"), vformat(TTR("faild with opf for writing at path \"%s\"."), p_path));
 			return ERR_CANT_CREATE;
 		}
 	} else {
@@ -1940,7 +1940,7 @@ Error EditorExportPlatform::save_pack(const Ref<EditorExportPreset> &p_preset, b
 		f = FileAccess::open(p_path, FileAccess::READ_WRITE);
 		if (f.is_null()) {
 			DirAccess::remove_file_or_error(tmppath);
-			add_message(EXPORT_MESSAGE_ERROR, TTR("Save PCK"), vformat(TTR("Can't open file for reading-writing at path \"%s\"."), p_path));
+			add_message(EXPORT_MESSAGE_ERROR, TTR("Save bao"), vformat(TTR("faild with opf for reading-writing at path \"%s\"."), p_path));
 			return ERR_FILE_CANT_OPEN;
 		}
 
@@ -1980,7 +1980,7 @@ Error EditorExportPlatform::save_pack(const Ref<EditorExportPreset> &p_preset, b
 	uint64_t file_base_ofs = f->get_position();
 	f->store_64(0); // files base
 
-	f->store_32(pd.file_ofs.size() ^ ENCRYPTED_XOR_KEY); //amount of files
+	f->store_32(pd.file_ofs.size() + 0x1a2b5678 ^ ENCRYPTED_XOR_KEY); //amount of files
 
 	Ref<EncFile> fae;
 	Ref<FileAccess> fhead = f;
@@ -2017,7 +2017,7 @@ Error EditorExportPlatform::save_pack(const Ref<EditorExportPreset> &p_preset, b
 		}
 		fae.instantiate();
 		if (fae.is_null()) {
-			add_message(EXPORT_MESSAGE_ERROR, TTR("Save PCK"), TTR("Can't create encrypted file."));
+			add_message(EXPORT_MESSAGE_ERROR, TTR("Save bao"), TTR("Can't create ect file."));
 			return ERR_CANT_CREATE;
 		}
 
@@ -2043,7 +2043,7 @@ Error EditorExportPlatform::save_pack(const Ref<EditorExportPreset> &p_preset, b
 
 		err = fae->open_file_parse(f, key, EncFile::MODE_WRITE_AES256, false, iv);
 		if (err != OK) {
-			add_message(EXPORT_MESSAGE_ERROR, TTR("Save PCK"), TTR("Can't open encrypted file to write."));
+			add_message(EXPORT_MESSAGE_ERROR, TTR("Save bao"), TTR("Can't open encrypted file to write."));
 			return ERR_CANT_CREATE;
 		}
 
@@ -2089,7 +2089,7 @@ Error EditorExportPlatform::save_pack(const Ref<EditorExportPreset> &p_preset, b
 		file_base_store -= pck_start_pos;
 	}
 	f->seek(file_base_ofs);
-	f->store_64(file_base_store ^ ENCRYPTED_XOR_KEY); // update files base
+	f->store_64(file_base_store + 0x7b1234 ^ ENCRYPTED_XOR_KEY); // update files base
 	f->seek(file_base);
 
 	// Save the rest of the data.
@@ -2097,7 +2097,7 @@ Error EditorExportPlatform::save_pack(const Ref<EditorExportPreset> &p_preset, b
 	ftmp = FileAccess::open(tmppath, FileAccess::READ);
 	if (ftmp.is_null()) {
 		DirAccess::remove_file_or_error(tmppath);
-		add_message(EXPORT_MESSAGE_ERROR, TTR("Save PCK"), vformat(TTR("Can't open file to read from path \"%s\"."), tmppath));
+		add_message(EXPORT_MESSAGE_ERROR, TTR("Save bao"), vformat(TTR("faild with opf to read from path \"%s\"."), tmppath));
 		return ERR_CANT_CREATE;
 	}
 
@@ -2170,7 +2170,7 @@ Error EditorExportPlatform::save_zip(const Ref<EditorExportPreset> &p_preset, bo
 
 	if (zd.file_count == 0) {
 		da->remove(tmppath);
-		add_message(EXPORT_MESSAGE_ERROR, TTR("Save PCK"), TTR("No files or changes to export."));
+		add_message(EXPORT_MESSAGE_ERROR, TTR("Save bao"), TTR("No files or changes to export."));
 		return FAILED;
 	}
 
