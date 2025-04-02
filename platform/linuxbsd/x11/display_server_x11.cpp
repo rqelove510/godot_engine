@@ -111,8 +111,7 @@ struct Hints {
 static String get_atom_name(Display *p_disp, Atom p_atom) {
 	char *name = XGetAtomName(p_disp, p_atom);
 	ERR_FAIL_NULL_V_MSG(name, String(), "Atom is invalid.");
-	String ret;
-	ret.append_utf8(name);
+	String ret = String::utf8(name);
 	XFree(name);
 	return ret;
 }
@@ -341,38 +340,63 @@ void DisplayServerX11::_flush_mouse_motion() {
 
 #ifdef SPEECHD_ENABLED
 
+void DisplayServerX11::initialize_tts() const {
+	const_cast<DisplayServerX11 *>(this)->tts = memnew(TTS_Linux);
+}
+
 bool DisplayServerX11::tts_is_speaking() const {
-	ERR_FAIL_NULL_V_MSG(tts, false, "Enable the \"audio/general/text_to_speech\" project setting to use text-to-speech.");
+	if (unlikely(!tts)) {
+		initialize_tts();
+	}
+	ERR_FAIL_NULL_V(tts, false);
 	return tts->is_speaking();
 }
 
 bool DisplayServerX11::tts_is_paused() const {
-	ERR_FAIL_NULL_V_MSG(tts, false, "Enable the \"audio/general/text_to_speech\" project setting to use text-to-speech.");
+	if (unlikely(!tts)) {
+		initialize_tts();
+	}
+	ERR_FAIL_NULL_V(tts, false);
 	return tts->is_paused();
 }
 
 TypedArray<Dictionary> DisplayServerX11::tts_get_voices() const {
-	ERR_FAIL_NULL_V_MSG(tts, TypedArray<Dictionary>(), "Enable the \"audio/general/text_to_speech\" project setting to use text-to-speech.");
+	if (unlikely(!tts)) {
+		initialize_tts();
+	}
+	ERR_FAIL_NULL_V(tts, TypedArray<Dictionary>());
 	return tts->get_voices();
 }
 
 void DisplayServerX11::tts_speak(const String &p_text, const String &p_voice, int p_volume, float p_pitch, float p_rate, int p_utterance_id, bool p_interrupt) {
-	ERR_FAIL_NULL_MSG(tts, "Enable the \"audio/general/text_to_speech\" project setting to use text-to-speech.");
+	if (unlikely(!tts)) {
+		initialize_tts();
+	}
+	ERR_FAIL_NULL(tts);
 	tts->speak(p_text, p_voice, p_volume, p_pitch, p_rate, p_utterance_id, p_interrupt);
 }
 
 void DisplayServerX11::tts_pause() {
-	ERR_FAIL_NULL_MSG(tts, "Enable the \"audio/general/text_to_speech\" project setting to use text-to-speech.");
+	if (unlikely(!tts)) {
+		initialize_tts();
+	}
+	ERR_FAIL_NULL(tts);
 	tts->pause();
 }
 
 void DisplayServerX11::tts_resume() {
-	ERR_FAIL_NULL_MSG(tts, "Enable the \"audio/general/text_to_speech\" project setting to use text-to-speech.");
+	if (unlikely(!tts)) {
+		initialize_tts();
+	}
+	ERR_FAIL_NULL(tts);
 	tts->resume();
 }
 
 void DisplayServerX11::tts_stop() {
-	ERR_FAIL_NULL_MSG(tts, "Enable the \"audio/general/text_to_speech\" project setting to use text-to-speech.");
+	if (unlikely(!tts)) {
+		initialize_tts();
+	}
+	ERR_FAIL_NULL(tts);
 	tts->stop();
 }
 
@@ -3684,8 +3708,7 @@ void DisplayServerX11::_handle_key_event(WindowID p_window, XKeyEvent *p_event, 
 				keycode -= 'a' - 'A';
 			}
 
-			String tmp;
-			tmp.append_utf8(utf8string, utf8bytes);
+			String tmp = String::utf8(utf8string, utf8bytes);
 			for (int i = 0; i < tmp.length(); i++) {
 				Ref<InputEventKey> k;
 				k.instantiate();
@@ -3765,8 +3788,7 @@ void DisplayServerX11::_handle_key_event(WindowID p_window, XKeyEvent *p_event, 
 				char str_xkb[256] = {};
 				int str_xkb_size = xkb_compose_state_get_utf8(wd.xkb_state, str_xkb, 255);
 
-				String tmp;
-				tmp.append_utf8(str_xkb, str_xkb_size);
+				String tmp = String::utf8(str_xkb, str_xkb_size);
 				for (int i = 0; i < tmp.length(); i++) {
 					Ref<InputEventKey> k;
 					k.instantiate();
@@ -6784,7 +6806,7 @@ DisplayServerX11::DisplayServerX11(const String &p_rendering_driver, WindowMode 
 	// Init TTS
 	bool tts_enabled = GLOBAL_GET("audio/general/text_to_speech");
 	if (tts_enabled) {
-		tts = memnew(TTS_Linux);
+		initialize_tts();
 	}
 #endif
 
