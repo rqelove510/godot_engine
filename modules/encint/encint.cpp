@@ -2,7 +2,6 @@
 #include "core/os/os.h"
 #include "core/os/time.h"
 
-
 uint64_t EncInt::_global_key = []() {
 	return 0;
 }();
@@ -21,7 +20,7 @@ String EncInt::store_num() {
 	uint64_t encrypted_value_xor = _value;
 	uint64_t salt_xor = _m_instance_salt ^ (_rdv + 0x2c9b);
 	uint64_t rot_xor = _rotation_num ^ (_rdv + 0xb34a);
-	uint64_t verify = (encrypted_value_xor ^ _rdv) ^ _global_key ;
+	uint64_t verify = (encrypted_value_xor ^ _rdv) ^ _global_key;
 
 	PackedByteArray data;
 	data.resize(32);
@@ -78,7 +77,6 @@ uint64_t EncInt::restore_num(const String &p_encoded) {
 	uint64_t salt_value = salt_xor ^ (_rdv + 0x2c9b);
 
 	return _restore_num(encrypted_value, salt_value, rot_value);
-
 }
 
 uint64_t EncInt::restore_num_from_raw_data(const Array &raw_data) {
@@ -104,16 +102,15 @@ uint64_t EncInt::_restore_num(uint64_t encrypted_value, uint64_t salt_value, uin
 	if (rot_value < 8) {
 		uint64_t temp = encrypted_value ^ (_global_key & _rdv);
 
-		for (int i = rot_value; i >= 0; --i) {
+		for (int i = static_cast<int>(rot_value); i >= 0; --i) {
 			uint64_t rotated_key = (salt_value << i) | (salt_value >> (64 - i));
 			temp ^= rotated_key;
 		}
-		return (temp ^ salt_value) ^ (salt_value << rot_value) | (salt_value >> (64 - rot_value));
-
+		return (temp ^ salt_value) ^ ((salt_value << rot_value) | (salt_value >> (64 - rot_value)));
 	} else {
 		uint64_t loopcount = rot_value % 8;
 		uint64_t xo_key = (salt_value << loopcount) | (salt_value >> (64 - loopcount));
-		uint64_t shift = _get_rot_value(rot_value, true);
+		uint64_t shift = ((rot_value % 8) + 4) % 8;
 		uint64_t parm_key = (salt_value << shift) | (salt_value >> (64 - shift));
 
 		return simple_dec(encrypted_value, parm_key) ^ xo_key;
@@ -124,7 +121,7 @@ uint64_t EncInt::_encrypt_value(uint64_t p_value) const {
 	MutexLock lock(mutex);
 	uint64_t temp = p_value ^ _m_instance_salt;
 	uint64_t loopcount = (_rotation_num % 8) + 1;
-	for (int i = 0; i < loopcount; ++i) {
+	for (int i = 0; i < static_cast<int>(loopcount); ++i) {
 		temp ^= _precomputed_rotated_keys[i];
 	}
 	return temp ^ (_global_key & _rdv);
@@ -134,7 +131,7 @@ uint64_t EncInt::_decrypt_value(uint64_t p_value) const {
 	MutexLock lock(mutex);
 	uint64_t temp = p_value ^ (_global_key & _rdv);
 	uint64_t loopcount = _rotation_num % 8;
-	for (int i = loopcount; i >= 0; --i) {
+	for (int i = static_cast<int>(loopcount); i >= 0; --i) {
 		temp ^= _precomputed_rotated_keys[i];
 	}
 	return temp ^ _m_instance_salt;
@@ -152,14 +149,19 @@ uint64_t EncInt::_calculate_checksum(uint64_t p_value) const {
 
 uint64_t EncInt::get_value() {
 	MutexLock lock(mutex);
-	uint64_t x_v = 0;
+	uint64_t x_v = Time::get_singleton()->get_ticks_msec();
 
 	if (_checksum != _calculate_checksum(_value)) {
-		emit_signal("v_failed", 0, _type);
+		emit_signal("v_failed", -2, _type);//-1时间验证不过，-2和值验证不过，
 		return 0;
 	}
 
 	uint64_t temp_key = 0;
+	if (_check_delta(x_v)) {
+		emit_signal("v_failed", -1, _type);
+		return 0;
+	}
+
 	if (_rotation_num < 8) {
 		uint64_t value = _decrypt_value(_value);
 		temp_key = _precomputed_rotated_keys[_rotation_num];
@@ -170,49 +172,31 @@ uint64_t EncInt::get_value() {
 		x_v = simple_dec(_value, temp_key);
 		return x_v ^ _precomputed_rotated_keys[_rotation_num % 8];
 	}
-
 }
 
 void EncInt::set_value(uint64_t p_value) {
+	uint64_t x_v = Time::get_singleton()->get_ticks_msec();
+	MutexLock lock(mutex);
 	_rotation_num = _get_rot_value(p_value);
-	if (_rotation_num < 8) {
-		//方案A加密
-		_value = _encrypt_value(p_value ^ _precomputed_rotated_keys[_rotation_num]);
 
+	if (_check_delta(x_v)) {
+		emit_signal("v_failed", -1, _type);
+		return;
+	}
+	if (_rotation_num < 8) {
+		_value = _encrypt_value(p_value ^ _precomputed_rotated_keys[_rotation_num]);
 	} else {
-		//方案B加密
 		uint64_t temp_key = _precomputed_rotated_keys[_get_rot_value(_rotation_num, true)];
 		_value = simple_enc(p_value ^ _precomputed_rotated_keys[_rotation_num % 8], temp_key);
 	}
 	_checksum = _calculate_checksum(_value);
-
+	emit_signal("value_changed", p_value);
 
 }
 
-
-//========过渡功能函数-----------------------------
-uint64_t EncInt::_get_start_msc(uint64_t value) {
-	uint64_t a = 16 + value;
-	uint64_t temp = 1024 * 8;
-	for (uint32_t i = 8; i > 0; --i) {
-		temp += i;
-		if (i * 8 > _checksum) {
-			temp = (a + i) << 2;
-		} else {
-			value += (16 + 2 * 4);
-		}
-		value += 128;
-		if (i == 1) {
-			value += _checksum;
-			a = 0;
-			_gr_num = (Math::rand() % 10000) + 0x128;
-		}
-	}
-	if ((value % 1245) + 1 > a) {
-		temp = Time::get_singleton()->get_ticks_msec();
-	}
-
-	return temp;
+bool EncInt::_check_delta(uint64_t pri_time) {
+	//_gr_num = (Math::rand() % 1000) + 0x128 + value;
+	return Time::get_singleton()->get_ticks_msec() - pri_time > 100;
 }
 
 uint64_t EncInt::_simple_cal(uint64_t p_value) {
@@ -226,9 +210,8 @@ uint64_t EncInt::_get_rot_value(uint64_t value, bool clamp) {
 	return (Math::rand() % 15) + 1;
 }
 
-//========构建功能---------------------------------
 EncInt::EncInt() :
-		_value(0), _type("unknow_") {
+		_value(0), _type("unknow_int") {
 	if (_global_key == 0) {
 		String mac_addr = OS::get_singleton()->get_mac_address();
 		if (mac_addr == "") {
@@ -262,7 +245,6 @@ EncInt::EncInt(uint64_t init_value, String type) {
 Object *EncInt::create(uint64_t p_initial_value, const String &p_type) {
 	return memnew(EncInt(p_initial_value, p_type));
 }
-
 
 uint64_t EncInt::generate_big_randnum() {
 	uint64_t rand_digit = (Math::rand() % 9 + 1) * 1000000000ULL + Math::rand() % 999999999ULL;
@@ -303,7 +285,6 @@ uint64_t EncInt::simple_dec_from_b64(const String &b64_str, uint64_t key) {
 			data_len);
 
 	if (err != OK || decoded_len != 8) {
-		// 这里可以添加错误处理逻辑
 		return 0;
 	}
 
@@ -316,7 +297,6 @@ uint64_t EncInt::simple_dec_from_b64(const String &b64_str, uint64_t key) {
 	return simple_dec(num_xor ^ 0x7e213b1f, key);
 }
 
-
 void EncInt::_bind_methods() {
 	ClassDB::bind_static_method(
 			"EncInt",
@@ -326,16 +306,16 @@ void EncInt::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_value"), &EncInt::get_value);
 	ClassDB::bind_method(D_METHOD("set_value", "value"), &EncInt::set_value);
 	ClassDB::bind_method(D_METHOD("get_type"), &EncInt::get_type);
+	ClassDB::bind_method(D_METHOD("set_type"), &EncInt::set_type);
+
 	ClassDB::bind_method(D_METHOD("store_num"), &EncInt::store_num);
 
-	
 	ClassDB::bind_method(D_METHOD("get_raw_data"), &EncInt::get_raw_data);
 
-
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "value"), "set_value", "get_value");
-	ADD_PROPERTY(PropertyInfo(Variant::STRING, "type"), "", "get_type");
+	ADD_PROPERTY(PropertyInfo(Variant::STRING, "type"), "set_type", "get_type");
 
-	ADD_SIGNAL(MethodInfo("value_changed", PropertyInfo(Variant::INT, "value")));//, PropertyInfo(Variant::STRING, "type")
+	ADD_SIGNAL(MethodInfo("value_changed", PropertyInfo(Variant::INT, "value")));
 	ADD_SIGNAL(MethodInfo("v_failed", PropertyInfo(Variant::INT, "new_value"), PropertyInfo(Variant::STRING, "type")));
 
 	ClassDB::bind_static_method("EncInt", D_METHOD("generate_big_randnum"), &EncInt::generate_big_randnum);
@@ -346,5 +326,4 @@ void EncInt::_bind_methods() {
 
 	ClassDB::bind_static_method("EncInt", D_METHOD("simple_enc_to_b64", "value", "salt_v"), &EncInt::simple_enc_to_b64, DEFVAL(0));
 	ClassDB::bind_static_method("EncInt", D_METHOD("simple_dec_from_b64", "b64_str", "salt_v"), &EncInt::simple_dec_from_b64, DEFVAL(0));
-
 }
