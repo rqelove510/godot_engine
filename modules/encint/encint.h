@@ -9,7 +9,7 @@ class EncInt : public Object {
 	GDCLASS(EncInt, Object);
 
 private:
-	EncInt();
+	EncInt()=default;
 
 	Mutex mutex;
 

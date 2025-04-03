@@ -69,7 +69,7 @@ uint64_t EncInt::restore_num(const String &p_encoded) {
 		verify |= static_cast<uint64_t>(buf[i + 24]) << (i * 8);
 	}
 
-	if (verify != ((encrypted_value ^ _rdv) ^ _global_key)) {
+	if (verify != ((encrypted_value ^ _global_key) ^ _rdv)) {
 		return 0;
 	}
 
@@ -84,6 +84,9 @@ uint64_t EncInt::restore_num_from_raw_data(const Array &raw_data) {
 	uint64_t salt_value = raw_data[1];
 	uint64_t rot_value = raw_data[2];
 	uint64_t global_key = raw_data[3];
+	if (global_key != _global_key) {
+		return 0;
+	}
 	return _restore_num(encrypted_value, salt_value, rot_value);
 }
 
@@ -210,21 +213,21 @@ uint64_t EncInt::_get_rot_value(uint64_t value, bool clamp) {
 	return (Math::rand() % 15) + 1;
 }
 
-EncInt::EncInt() :
-		_value(0), _type("unknow_int") {
-	if (_global_key == 0) {
-		String mac_addr = OS::get_singleton()->get_mac_address();
-		if (mac_addr == "") {
-			mac_addr = OS::get_singleton()->get_unique_id();
-		}
-		mac_addr += "_ZHGAME";
-		_global_key = mac_addr.hash() * 100 + 0x48;
-	}
-	_m_instance_salt = generate_big_randnum();
-	_init_precomputed_keys();
-
-	set_value(0);
-}
+//EncInt::EncInt() :
+//		_value(0), _type("unknow_int") {
+//	if (_global_key == 0) {
+//		String mac_addr = OS::get_singleton()->get_mac_address();
+//		if (mac_addr == "") {
+//			mac_addr = OS::get_singleton()->get_unique_id();
+//		}
+//		mac_addr += "_ZHGAME";
+//		_global_key = mac_addr.hash() * 100 + 0x48;
+//	}
+//	_m_instance_salt = generate_big_randnum();
+//	_init_precomputed_keys();
+//
+//	set_value(0);
+//}
 
 EncInt::EncInt(uint64_t init_value, String type) {
 	_type = type;
