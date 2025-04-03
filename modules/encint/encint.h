@@ -31,7 +31,8 @@ private:
 
 	uint64_t _get_start_msc(uint64_t value);
 	uint64_t _simple_cal(uint64_t p_value);
-	uint64_t _get_rot_value(uint64_t value, bool clamp_idx = false);
+	static uint64_t _get_rot_value(uint64_t value, bool clamp_idx = false);
+	static uint64_t _restore_num(uint64_t enc_value, uint64_t salt, uint64_t rot);
 
 protected:
 	static void _bind_methods();

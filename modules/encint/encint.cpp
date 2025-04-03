@@ -2,18 +2,15 @@
 #include "core/os/os.h"
 #include "core/os/time.h"
 
-//#include "core/core_bind.h"
 
 uint64_t EncInt::_global_key = []() {
 	return 0;
 }();
 
 void EncInt::_init_precomputed_keys() {
-	constexpr int KEY_BITS = sizeof(_m_instance_salt) * 8;
-	_precomputed_rotated_keys.resize(16);
-	for (int i = 0; i < 16; ++i) {
-		int shift = i % KEY_BITS;
-		uint64_t rotated_key = (_m_instance_salt << shift) | (_m_instance_salt >> (KEY_BITS - shift));
+	_precomputed_rotated_keys.resize(8);
+	for (int i = 0; i < 8; ++i) {
+		uint64_t rotated_key = (_m_instance_salt << i) | (_m_instance_salt >> (64 - i));
 		_precomputed_rotated_keys.write[i] = rotated_key;
 	}
 }
@@ -24,14 +21,16 @@ String EncInt::store_num() {
 	uint64_t encrypted_value_xor = _value;
 	uint64_t salt_xor = _m_instance_salt ^ (_rdv + 0x2c9b);
 	uint64_t rot_xor = _rotation_num ^ (_rdv + 0xb34a);
+	uint64_t verify = (encrypted_value_xor ^ _rdv) ^ _global_key ;
 
 	PackedByteArray data;
-	data.resize(24);
+	data.resize(32);
 
 	for (int i = 0; i < 8; ++i) {
 		data.write[i] = (encrypted_value_xor >> (i * 8)) & 0xFF;
 		data.write[i + 8] = (salt_xor >> (i * 8)) & 0xFF;
 		data.write[i + 16] = (rot_xor >> (i * 8)) & 0xFF;
+		data.write[i + 24] = (verify >> (i * 8)) & 0xFF;
 	}
 
 	return CryptoCore::b64_encode_str(data.ptr(), data.size());
@@ -53,7 +52,7 @@ uint64_t EncInt::restore_num(const String &p_encoded) {
 			reinterpret_cast<const unsigned char *>(data),
 			data_len);
 
-	if (err != OK || decoded_len != 24) {
+	if (err != OK || decoded_len != 32) {
 		return 0;
 	}
 
@@ -62,26 +61,24 @@ uint64_t EncInt::restore_num(const String &p_encoded) {
 	uint64_t encrypted_value = 0;
 	uint64_t salt_xor = 0;
 	uint64_t rot_xor = 0;
+	uint64_t verify = 0;
 
 	for (int i = 0; i < 8; ++i) {
 		encrypted_value |= static_cast<uint64_t>(buf[i]) << (i * 8);
 		salt_xor |= static_cast<uint64_t>(buf[i + 8]) << (i * 8);
 		rot_xor |= static_cast<uint64_t>(buf[i + 16]) << (i * 8);
+		verify |= static_cast<uint64_t>(buf[i + 24]) << (i * 8);
 	}
 
-	// 确保异或操作先执行
+	if (verify != ((encrypted_value ^ _rdv) ^ _global_key)) {
+		return 0;
+	}
+
 	uint64_t rot_value = rot_xor ^ (_rdv + 0xb34a);
 	uint64_t salt_value = salt_xor ^ (_rdv + 0x2c9b);
 
-	uint64_t temp = encrypted_value ^ (_global_key & _rdv);
-	uint64_t loopcount = rot_value % 16;
+	return _restore_num(encrypted_value, salt_value, rot_value);
 
-	for (int i = loopcount; i >= 0; --i) {
-		int shift = i % 64;
-		uint64_t rotated_key = (salt_value << shift) | (salt_value >> (64 - shift));
-		temp ^= rotated_key;
-	}
-	return temp ^ salt_value;
 }
 
 uint64_t EncInt::restore_num_from_raw_data(const Array &raw_data) {
@@ -89,16 +86,7 @@ uint64_t EncInt::restore_num_from_raw_data(const Array &raw_data) {
 	uint64_t salt_value = raw_data[1];
 	uint64_t rot_value = raw_data[2];
 	uint64_t global_key = raw_data[3];
-
-	uint64_t temp = encrypted_value ^ (global_key & _rdv);
-	uint64_t loopcount = rot_value % 16;
-
-	for (int i = loopcount; i >= 0; --i) {
-		int shift = i % 64;
-		uint64_t rotated_key = (salt_value << shift) | (salt_value >> (64 - shift));
-		temp ^= rotated_key;
-	}
-	return temp ^ salt_value;
+	return _restore_num(encrypted_value, salt_value, rot_value);
 }
 
 Array EncInt::get_raw_data() {
@@ -112,10 +100,30 @@ Array EncInt::get_raw_data() {
 	return lis;
 }
 
+uint64_t EncInt::_restore_num(uint64_t encrypted_value, uint64_t salt_value, uint64_t rot_value) {
+	if (rot_value < 8) {
+		uint64_t temp = encrypted_value ^ (_global_key & _rdv);
+
+		for (int i = rot_value; i >= 0; --i) {
+			uint64_t rotated_key = (salt_value << i) | (salt_value >> (64 - i));
+			temp ^= rotated_key;
+		}
+		return (temp ^ salt_value) ^ (salt_value << rot_value) | (salt_value >> (64 - rot_value));
+
+	} else {
+		uint64_t loopcount = rot_value % 8;
+		uint64_t xo_key = (salt_value << loopcount) | (salt_value >> (64 - loopcount));
+		uint64_t shift = _get_rot_value(rot_value, true);
+		uint64_t parm_key = (salt_value << shift) | (salt_value >> (64 - shift));
+
+		return simple_dec(encrypted_value, parm_key) ^ xo_key;
+	}
+}
+
 uint64_t EncInt::_encrypt_value(uint64_t p_value) const {
 	MutexLock lock(mutex);
 	uint64_t temp = p_value ^ _m_instance_salt;
-	uint64_t loopcount = (_rotation_num % 16) + 1;
+	uint64_t loopcount = (_rotation_num % 8) + 1;
 	for (int i = 0; i < loopcount; ++i) {
 		temp ^= _precomputed_rotated_keys[i];
 	}
@@ -125,7 +133,7 @@ uint64_t EncInt::_encrypt_value(uint64_t p_value) const {
 uint64_t EncInt::_decrypt_value(uint64_t p_value) const {
 	MutexLock lock(mutex);
 	uint64_t temp = p_value ^ (_global_key & _rdv);
-	uint64_t loopcount = _rotation_num % 16;
+	uint64_t loopcount = _rotation_num % 8;
 	for (int i = loopcount; i >= 0; --i) {
 		temp ^= _precomputed_rotated_keys[i];
 	}
@@ -142,174 +150,43 @@ uint64_t EncInt::_calculate_checksum(uint64_t p_value) const {
 	return checksum;
 }
 
-
 uint64_t EncInt::get_value() {
-	//MutexLock lock(mutex);
-	//uint64_t x_v = 0;
-
-	//if (_checksum != _calculate_checksum(_value)) {
-	//	emit_signal("v_failed", 0, _type);
-	//	return 0;
-	//}
-	////return value;
-	//uint64_t value = _decrypt_value(_value);
-
-
-	//uint64_t temp_key = 0;
-	//if (_rotation_num < 16) {
-	//	temp_key = _precomputed_rotated_keys[_rotation_num];
-	//	x_v = value ^ temp_key;
-	//	return x_v;
-	//} else {
-	//	temp_key = _precomputed_rotated_keys[_get_rot_value(_rotation_num, true)];
-	//	x_v = simple_dec(value ^ _precomputed_rotated_keys[_rotation_num%16], temp_key);
-	//	return x_v;
-	//}
-
-	//uint64_t start_t = _get_start_msc(_gr_num);
-	//uint64_t temp_key = _rotation_num ^ 0x256;
-	//_gr_num = 32;
-	//uint64_t x_v = simple_enc(_value);
-
-	//if (_checksum != _calculate_checksum(_value)) {
-	//	emit_signal("v_failed", 0, _type);
-	//	return 0;
-	//} else {
-	//	uint64_t idx = _rotation_num % 16;
-	//	uint64_t temp = 0;
-
-	//	for (size_t i = 0; i < 3; i++) {
-	//		if (i == 1) {
-	//			if (Time::get_singleton()->get_ticks_msec() - start_t > 200) {
-	//				emit_signal("v_failed", -1, _type);
-	//				return 0;
-	//			}
-	//			if (_rotation_num >= 16) {//方案2
-	//				start_t = _precomputed_rotated_keys[_get_rot_value(_rotation_num, true)];
-	//				x_v = simple_dec(temp ^ _precomputed_rotated_keys[12], start_t);
-	//				return x_v ^ _precomputed_rotated_keys[idx];
-	//			}
-
-	//		} else {//0,2
-	//			if (i < 2) {
-	//				//if (_rotation_num >= 16) {
-	//				//	temp_key = _precomputed_rotated_keys[12];
-	//				//} else {
-	//				//	temp_key = _precomputed_rotated_keys[8];
-	//				//}
-	//				temp = simple_dec(x_v);// ^ temp_key;
-
-	//			} else {//2，方案1
-	//				if (_rotation_num < 16) {
-	//					x_v = _decrypt_value(temp ^ _precomputed_rotated_keys[8]);
-	//					return x_v ^ _precomputed_rotated_keys[idx];
-	//				}
-	//			}
-	//		}
-	//	}
-
-	//}
-	//return 0;
-
 	MutexLock lock(mutex);
+	uint64_t x_v = 0;
 
-	uint64_t value = _decrypt_value(_value);
-	if (_checksum != _calculate_checksum(value)) {
-		emit_signal("v_failed", value, _type);
+	if (_checksum != _calculate_checksum(_value)) {
+		emit_signal("v_failed", 0, _type);
 		return 0;
 	}
-	return value;
+
+	uint64_t temp_key = 0;
+	if (_rotation_num < 8) {
+		uint64_t value = _decrypt_value(_value);
+		temp_key = _precomputed_rotated_keys[_rotation_num];
+		x_v = value ^ temp_key;
+		return x_v;
+	} else {
+		temp_key = _precomputed_rotated_keys[_get_rot_value(_rotation_num, true)];
+		x_v = simple_dec(_value, temp_key);
+		return x_v ^ _precomputed_rotated_keys[_rotation_num % 8];
+	}
+
 }
 
 void EncInt::set_value(uint64_t p_value) {
-
-	//_rotation_num = _get_rot_value(p_value);
-	//if (_rotation_num < 16) {
-	//	//方案A加密
-	//	_value = _encrypt_value(p_value) ^ _precomputed_rotated_keys[_rotation_num%16];
-
-	//} else {
-	//	//方案B加密
-	//	uint64_t temp_key = _precomputed_rotated_keys[_get_rot_value(_rotation_num, true)];
-	//	_value = simple_enc(p_value ^ _precomputed_rotated_keys[_rotation_num % 16], temp_key);
-
-	//	_checksum = _calculate_checksum(_value);
-	//}
-
-
-
-	//_gr_num = 32;
-	//uint64_t start_t = 0x16b2;
-	//uint64_t temp = p_value ^ _rdv;
-	//uint64_t x_v = 2048;
-	//uint64_t temp2 = p_value;
-
-	//for (size_t i = 0; i < 4; i++) {
-	//	if (_gr_num > 64 or i > 0) {
-	//		uint64_t temp3 = p_value + (0x48 << i);//gr
-	//		if (i < 2) {//i=1
-	//			temp2 = simple_enc(p_value);//gr
-	//			x_v += _simple_cal(temp);//初赋值---》1
-	//		} else {//i=2,3时
-	//			temp2 = _get_rot_value(p_value);//rot值先定下来，先放到temp2中
-	//			x_v -= 1024;//减掉1024
-
-	//			if (i % 3 == 0) {//i=3
-	//				temp3 = x_v ^ _rdv;
-	//				uint64_t end_key = _precomputed_rotated_keys[temp2 % 16]; //原始值 ^ list_key:idx
-
-	//				mutex.lock();
-	//				_rotation_num = temp2;
-	//				
-	//				if (temp2 < 16) {
-	//					//方案A加密
-	//					start_t = _encrypt_value(((temp3 - 0x74b1) - (2048 << 4)) ^ end_key);
-
-	//				} else {
-	//					//方案B加密
-	//					uint64_t temp_key = _precomputed_rotated_keys[_get_rot_value(temp2, true)];
-	//					start_t = simple_enc(((temp3 - 0x74b1) - (2048 << 4)) ^ end_key, temp_key);
-	//					
-	//
-	//				}
-	//				
-	//				_checksum = _calculate_checksum(start_t);
-
-	//				if (_simple_cal(temp2) > _gr_num) {
-	//					_value = start_t;
-	//				}
-	//				
-	//				mutex.unlock();	
-	//			} else {//i==2
-	//				if (Time::get_singleton()->get_ticks_msec() - start_t > 200) {
-	//					emit_signal("v_failed", -2, _type);
-	//					return;
-	//				}
-	//				start_t = temp2 ^ p_value;//gr
-	//			}
-	//		}
-	//	} else {//i==0
-	//		temp = p_value + ((_gr_num * 64) << 4);
-	//		start_t = _get_start_msc(p_value + 2048);
-	//	}
-
-	//}
-	//uint64_t temp5 = simple_enc(temp, _checksum);
-	//
-	//if (temp % 2 == 0) {
-	//	temp = simple_enc(temp, _precomputed_rotated_keys[0]);
-	//} else {
-	//	_gr_num = temp5;
-	//}
-
-	//emit_signal("value_changed", p_value);
-
-	MutexLock lock(mutex);
 	_rotation_num = _get_rot_value(p_value);
+	if (_rotation_num < 8) {
+		//方案A加密
+		_value = _encrypt_value(p_value ^ _precomputed_rotated_keys[_rotation_num]);
 
-	_value = _encrypt_value(p_value);
-	_checksum = _calculate_checksum(p_value);
-	emit_signal("value_changed", p_value);
+	} else {
+		//方案B加密
+		uint64_t temp_key = _precomputed_rotated_keys[_get_rot_value(_rotation_num, true)];
+		_value = simple_enc(p_value ^ _precomputed_rotated_keys[_rotation_num % 8], temp_key);
+	}
+	_checksum = _calculate_checksum(_value);
+
+
 }
 
 
@@ -344,19 +221,10 @@ uint64_t EncInt::_simple_cal(uint64_t p_value) {
 
 uint64_t EncInt::_get_rot_value(uint64_t value, bool clamp) {
 	if (clamp) {
-		int idx = (value % 16) + 8;
-		if (idx > 15) {
-			return idx - 15;
-		}
-		return idx;
+		return ((value % 8) + 4) % 8;
 	}
-	if (value % 3 == 0) {
-		return Math::rand() % 32;
-	}
-	return Math::rand() % 16;
-
+	return (Math::rand() % 15) + 1;
 }
-
 
 //========构建功能---------------------------------
 EncInt::EncInt() :
