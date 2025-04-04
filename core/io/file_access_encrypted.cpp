@@ -42,7 +42,7 @@ void EncFile::deinitialize() {
 }
 
 Error EncFile::open_file_parse(Ref<FileAccess> p_base, const Vector<uint8_t> &p_key, Mode p_mode, bool p_with_magic, const Vector<uint8_t> &p_iv) {
-	ERR_FAIL_COND_V_MSG(file.is_valid(), ERR_ALREADY_IN_USE, vformat("res_idx_4105", file->get_path_absolute()));
+	ERR_FAIL_COND_V_MSG(file.is_valid(), ERR_ALREADY_IN_USE, vformat("res_4105", file->get_path_absolute()));
 	ERR_FAIL_COND_V(p_key.size() != 32, ERR_INVALID_PARAMETER);
 
 	pos = 0;
@@ -50,78 +50,35 @@ Error EncFile::open_file_parse(Ref<FileAccess> p_base, const Vector<uint8_t> &p_
 	use_magic = p_with_magic;
 
 	uint8_t num_key = 23;
+	uint8_t tt_key = 0;
+
+	uint64_t star_t = OS::get_singleton()->get_ticks_msec();
 
 	Vector<uint8_t> processed_key;
-	processed_key.resize(32);
-	uint8_t tt_key = 0;
-	uint64_t star_t = OS::get_singleton()->get_ticks_msec();
+	processed_key.resize(16);
 	
-        //int64_t delta = end - start;
 	key.resize(32);
+	for (int t = 16; t < 32; t++) {
+		if (t == 16 && OS::get_singleton()->get_ticks_msec() - star_t > 100) {
+			return FAILED;
+		}
 
-	for (int i = 0; i < 64+num_key; i++) {
-		uint8_t aa_key = num_key;
-		uint16_t count = i + num_key;
-		if (i < 70) {
-			aa_key++;
-			if (num_key > aa_key - 20) {
-				num_key--;
-			} else {
-				count = num_key + aa_key;
-			}
+		if (t> 0 && (t % 5 == 0)) {
+			key.write[t] = p_key[t - 16 + 3];
 		} else {
-			aa_key = 15;
-			if (i < 86) {
-				uint8_t idx = i - 70;
+			key.write[t] = p_key[t] ^ (0x24 + t);
+		}
 
-				if (i % 2 == 0) {
-					if (num_key % 2 == 0) {
-						processed_key.write[idx] = tt_key;
-					} else {
-						processed_key.write[idx] = p_key[i % 32];
-					}
-				} else if (i < 80) {
-					num_key = i;
-					if (i == 75) {
-						num_key = tt_key;
-					}
-				}
-
-				key.write[idx + aa_key] = (p_key[idx] + 64) % 255 ;
-
-			} else {
-				uint8_t t = 32;
-				uint64_t end_t = OS::get_singleton()->get_ticks_msec();
-				if (end_t - star_t > 300) {
-					//CRASH_NOW_MSG("gnmb,fae01:%d".vformat(end_t - star_t));
-					CRASH_NOW();
-				} else {
-					star_t = end_t;
-				}
-				for (int d = 16; d < t; d++) {
-					processed_key.write[d - 16] = p_key[p_key.size()-(d-15)];
-				}
-
+		if (t == 31) {
+			for (int i = 0; i < 16; i++) {
+				processed_key.write[i] = p_key[15 - i] ^ 0x4b;
 			}
 		}
-		num_key++;
-		tt_key = p_key[count % 32];
 	}
-
-	uint64_t end_t = OS::get_singleton()->get_ticks_msec();
-	if (end_t - star_t > 300) {
-		//CRASH_NOW_MSG("gnmb,fae02:%d".vformat(end_t - star_t));
-		CRASH_NOW();
-	}
-
 	if (p_mode == MODE_WRITE_AES256) {
 		data.clear();
 		writing = true;
 		file = p_base;
-
-		for (int i = 0; i < 16; i++) {
-			key.write[i] = (processed_key[i] + 128) % 255;
-		}
 
 		if (p_iv.is_empty()) {
 			iv.resize(16);
@@ -130,7 +87,7 @@ Error EncFile::open_file_parse(Ref<FileAccess> p_base, const Vector<uint8_t> &p_
 				if (_fae_static_rng->init() != OK) {
 					memdelete(_fae_static_rng);
 					_fae_static_rng = nullptr;
-					ERR_FAIL_V_MSG(FAILED, "res_idx_4105.");
+					ERR_FAIL_V_MSG(FAILED, "res_4105.");
 				}
 			}
 			Error err = _fae_static_rng->get_random_bytes(iv.ptrw(), 16);
@@ -140,21 +97,27 @@ Error EncFile::open_file_parse(Ref<FileAccess> p_base, const Vector<uint8_t> &p_
 			iv = p_iv;
 		}
 
+		for (int i = 0; i < 16; i++) {
+			key.write[i] = processed_key[i];
+		}
+
 	} else if (p_mode == MODE_READ) {
 		writing = false;
 
-		for (int i = 0; i < 16; i++) {
-			key.write[i] = (processed_key[i] + 128) % 255;
-		}
-
 		if (use_magic) {
 			uint32_t magic = p_base->get_32();
-			ERR_FAIL_COND_V(magic != ENCRYPTED_HEADER_MAGIC, ERR_FILE_UNRECOGNIZED);
+			if (magic != ENCRYPTED_HEADER_MAGIC) {
+				return FAILED;
+			}
 		}
 
 		unsigned char md5d[16];
 		p_base->get_buffer(md5d, 16);
 		length = p_base->get_64();
+
+		for (int i = 0; i < 16; i++) {
+			key.write[i] = processed_key[i];
+		}
 
 		iv.resize(16);
 		p_base->get_buffer(iv.ptrw(), 16);
@@ -173,7 +136,7 @@ Error EncFile::open_file_parse(Ref<FileAccess> p_base, const Vector<uint8_t> &p_
 		{
 			CryptoCore::AESContext ctx;
 
-			ctx.set_encode_key(key.ptrw(), 256); // Due to the nature of CFB, same key schedule is used for both encryption and decryption!
+			ctx.set_encode_key(key.ptrw(), 256); 
 			ctx.decrypt_cfb(ds, iv.ptrw(), data.ptrw(), data.ptrw());
 		}
 
@@ -181,8 +144,6 @@ Error EncFile::open_file_parse(Ref<FileAccess> p_base, const Vector<uint8_t> &p_
 
 		unsigned char hash[16];
 		ERR_FAIL_COND_V(CryptoCore::md5(data.ptr(), data.size(), hash) != OK, ERR_BUG);
-
-		//ERR_FAIL_COND_V_MSG(String::md5(hash) != String::md5(md5d), ERR_FILE_CORRUPT, "_MD5fae donotmatch");
 
 		file = p_base;
 	}
@@ -293,7 +254,7 @@ bool EncFile::eof_reached() const {
 }
 
 uint64_t EncFile::get_buffer(uint8_t *p_dst, uint64_t p_length) const {
-	ERR_FAIL_COND_V_MSG(writing, -1, "res_idx_4104.");
+	ERR_FAIL_COND_V_MSG(writing, -1, "res_4104.");
 
 	if (!p_length) {
 		return 0;
@@ -318,7 +279,7 @@ Error EncFile::get_error() const {
 }
 
 bool EncFile::store_buffer(const uint8_t *p_src, uint64_t p_length) {
-	ERR_FAIL_COND_V_MSG(!writing, false, "res_idx_4103.");
+	ERR_FAIL_COND_V_MSG(!writing, false, "res_4103.");
 
 	if (!p_length) {
 		return true;
@@ -337,7 +298,7 @@ bool EncFile::store_buffer(const uint8_t *p_src, uint64_t p_length) {
 }
 
 void EncFile::flush() {
-	ERR_FAIL_COND_MSG(!writing, "res_idx_4102.");
+	ERR_FAIL_COND_MSG(!writing, "res_4102.");
 
 	// encrypted files keep data in memory till close()
 }
