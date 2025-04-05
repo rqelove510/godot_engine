@@ -83,7 +83,7 @@ void ConfigFile::set_value(const String &p_section, const String &p_key, const V
 Variant ConfigFile::get_value(const String &p_section, const String &p_key, const Variant &p_default) const {
 	if (!values.has(p_section) || !values[p_section].has(p_key)) {
 		ERR_FAIL_COND_V_MSG(p_default.get_type() == Variant::NIL, Variant(),
-				vformat("Couldn't find the given section \"%s\" and key \"%s\", and no default was given.", p_section, p_key));
+				vformat("res_1001 \"%s\" akey \"%s\",res_1002.", p_section, p_key));
 		return p_default;
 	}
 
@@ -108,7 +108,7 @@ void ConfigFile::get_sections(List<String> *r_sections) const {
 }
 
 void ConfigFile::get_section_keys(const String &p_section, List<String> *r_keys) const {
-	ERR_FAIL_COND_MSG(!values.has(p_section), vformat("Cannot get keys from nonexistent section \"%s\".", p_section));
+	ERR_FAIL_COND_MSG(!values.has(p_section), vformat("res_1002 \"%s\".", p_section));
 
 	for (const KeyValue<String, Variant> &E : values[p_section]) {
 		r_keys->push_back(E.key);
@@ -116,13 +116,13 @@ void ConfigFile::get_section_keys(const String &p_section, List<String> *r_keys)
 }
 
 void ConfigFile::erase_section(const String &p_section) {
-	ERR_FAIL_COND_MSG(!values.has(p_section), vformat("Cannot erase nonexistent section \"%s\".", p_section));
+	ERR_FAIL_COND_MSG(!values.has(p_section), vformat("res_1003 \"%s\".", p_section));
 	values.erase(p_section);
 }
 
 void ConfigFile::erase_section_key(const String &p_section, const String &p_key) {
-	ERR_FAIL_COND_MSG(!values.has(p_section), vformat("Cannot erase key \"%s\" from nonexistent section \"%s\".", p_key, p_section));
-	ERR_FAIL_COND_MSG(!values[p_section].has(p_key), vformat("Cannot erase nonexistent key \"%s\" from section \"%s\".", p_key, p_section));
+	ERR_FAIL_COND_MSG(!values.has(p_section), vformat("res_1005 \"%s\" res_1006 \"%s\".", p_key, p_section));
+	ERR_FAIL_COND_MSG(!values[p_section].has(p_key), vformat("res_1004 \"%s\" res_1007 \"%s\".", p_key, p_section));
 
 	values[p_section].erase(p_key);
 	if (values[p_section].is_empty()) {

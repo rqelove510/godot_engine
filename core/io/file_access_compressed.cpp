@@ -44,7 +44,7 @@ Error FileAccessCompressed::open_after_magic(Ref<FileAccess> p_base) {
 	block_size = f->get_32();
 	if (block_size == 0) {
 		f.unref();
-		ERR_FAIL_V_MSG(ERR_FILE_CORRUPT, vformat("Can't open compressed file '%s' with block size 0, it is corrupted.", p_base->get_path()));
+		ERR_FAIL_V_MSG(ERR_FILE_CORRUPT, vformat("res_3004", p_base->get_path()));
 	}
 	read_total = f->get_32();
 	uint32_t bc = (read_total / block_size) + 1;
@@ -181,7 +181,7 @@ String FileAccessCompressed::get_path_absolute() const {
 }
 
 void FileAccessCompressed::seek(uint64_t p_position) {
-	ERR_FAIL_COND_MSG(f.is_null(), "File must be opened before use.");
+	ERR_FAIL_COND_MSG(f.is_null(), "res_3003");
 
 	if (writing) {
 		ERR_FAIL_COND(p_position > write_max);
@@ -201,7 +201,7 @@ void FileAccessCompressed::seek(uint64_t p_position) {
 				f->seek(read_blocks[read_block].offset);
 				f->get_buffer(comp_buffer.ptrw(), read_blocks[read_block].csize);
 				int ret = Compression::decompress(buffer.ptrw(), read_blocks.size() == 1 ? read_total : block_size, comp_buffer.ptr(), read_blocks[read_block].csize, cmode);
-				ERR_FAIL_COND_MSG(ret == -1, "Compressed file is corrupt.");
+				ERR_FAIL_COND_MSG(ret == -1, "res_3005");
 				read_block_size = read_block == read_block_count - 1 ? read_total % block_size : block_size;
 			}
 
@@ -211,7 +211,7 @@ void FileAccessCompressed::seek(uint64_t p_position) {
 }
 
 void FileAccessCompressed::seek_end(int64_t p_position) {
-	ERR_FAIL_COND_MSG(f.is_null(), "File must be opened before use.");
+	ERR_FAIL_COND_MSG(f.is_null(), "res_3006");
 	if (writing) {
 		seek(write_max + p_position);
 	} else {
@@ -220,7 +220,7 @@ void FileAccessCompressed::seek_end(int64_t p_position) {
 }
 
 uint64_t FileAccessCompressed::get_position() const {
-	ERR_FAIL_COND_V_MSG(f.is_null(), 0, "File must be opened before use.");
+	ERR_FAIL_COND_V_MSG(f.is_null(), 0, "res_3007");
 	if (writing) {
 		return write_pos;
 	} else {
@@ -229,7 +229,7 @@ uint64_t FileAccessCompressed::get_position() const {
 }
 
 uint64_t FileAccessCompressed::get_length() const {
-	ERR_FAIL_COND_V_MSG(f.is_null(), 0, "File must be opened before use.");
+	ERR_FAIL_COND_V_MSG(f.is_null(), 0, "res_3008");
 	if (writing) {
 		return write_max;
 	} else {
@@ -238,7 +238,7 @@ uint64_t FileAccessCompressed::get_length() const {
 }
 
 bool FileAccessCompressed::eof_reached() const {
-	ERR_FAIL_COND_V_MSG(f.is_null(), false, "File must be opened before use.");
+	ERR_FAIL_COND_V_MSG(f.is_null(), false, "res_3009");
 	if (writing) {
 		return false;
 	} else {
@@ -252,8 +252,8 @@ uint64_t FileAccessCompressed::get_buffer(uint8_t *p_dst, uint64_t p_length) con
 	}
 
 	ERR_FAIL_NULL_V(p_dst, -1);
-	ERR_FAIL_COND_V_MSG(f.is_null(), -1, "File must be opened before use.");
-	ERR_FAIL_COND_V_MSG(writing, -1, "File has not been opened in read mode.");
+	ERR_FAIL_COND_V_MSG(f.is_null(), -1, "res_3010");
+	ERR_FAIL_COND_V_MSG(writing, -1, "res_3011");
 
 	if (at_end) {
 		read_eof = true;
@@ -289,7 +289,7 @@ uint64_t FileAccessCompressed::get_buffer(uint8_t *p_dst, uint64_t p_length) con
 		// Read the next block of compressed data.
 		f->get_buffer(comp_buffer.ptrw(), read_blocks[read_block].csize);
 		int ret = Compression::decompress(buffer.ptrw(), read_blocks.size() == 1 ? read_total : block_size, comp_buffer.ptr(), read_blocks[read_block].csize, cmode);
-		ERR_FAIL_COND_V_MSG(ret == -1, -1, "Compressed file is corrupt.");
+		ERR_FAIL_COND_V_MSG(ret == -1, -1, "res_3012");
 		read_block_size = read_block == read_block_count - 1 ? read_total % block_size : block_size;
 		read_pos = 0;
 	}
@@ -302,15 +302,15 @@ Error FileAccessCompressed::get_error() const {
 }
 
 void FileAccessCompressed::flush() {
-	ERR_FAIL_COND_MSG(f.is_null(), "File must be opened before use.");
-	ERR_FAIL_COND_MSG(!writing, "File has not been opened in write mode.");
+	ERR_FAIL_COND_MSG(f.is_null(), "res_3013");
+	ERR_FAIL_COND_MSG(!writing, "res_3014");
 
 	// compressed files keep data in memory till close()
 }
 
 bool FileAccessCompressed::store_buffer(const uint8_t *p_src, uint64_t p_length) {
-	ERR_FAIL_COND_V_MSG(f.is_null(), false, "File must be opened before use.");
-	ERR_FAIL_COND_V_MSG(!writing, false, "File has not been opened in write mode.");
+	ERR_FAIL_COND_V_MSG(f.is_null(), false, "res_3016");
+	ERR_FAIL_COND_V_MSG(!writing, false, "res_3015");
 
 	if (write_pos + (p_length) > write_max) {
 		write_max = write_pos + (p_length);

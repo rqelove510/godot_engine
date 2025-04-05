@@ -101,7 +101,7 @@ Error FileAccessWindows::open_internal(const String &p_path, int p_mode_flags) {
 	if (is_path_invalid(p_path)) {
 #ifdef DEBUG_ENABLED
 		if (p_mode_flags != READ) {
-			WARN_PRINT("The path :" + p_path + " is a reserved Windows system pipe, so it can't be used for creating files.");
+			WARN_PRINT("The path :" + p_path + " res_5001");
 		}
 #endif
 		return ERR_INVALID_PARAMETER;
@@ -188,7 +188,7 @@ Error FileAccessWindows::open_internal(const String &p_path, int p_mode_flags) {
 		}
 
 		if (mismatch) {
-			WARN_PRINT("Case mismatch opening requested file '" + p_path + "', stored as '" + proper_path + "' in the filesystem. This file will not open when exported to other case-sensitive platforms.");
+			WARN_PRINT("res_5002 '" + p_path + "', stored as '" + proper_path + "'res_5003.");
 		}
 	}
 #endif
@@ -273,7 +273,7 @@ void FileAccessWindows::_close() {
 
 		save_path = "";
 
-		ERR_FAIL_COND_MSG(rename_error, "Safe save failed. This may be a permissions problem, but also may happen because you are running a paranoid antivirus. If this is the case, please switch to Windows Defender or disable the 'safe save' option in editor settings. This makes it work, but increases the risk of file corruption in a crash.");
+		ERR_FAIL_COND_MSG(rename_error, "res_5004");
 	}
 }
 
@@ -308,7 +308,7 @@ void FileAccessWindows::seek_end(int64_t p_position) {
 }
 
 uint64_t FileAccessWindows::get_position() const {
-	ERR_FAIL_NULL_V_MSG(f, 0, "File must be opened before use.");
+	ERR_FAIL_NULL_V_MSG(f, 0, "res_5005.");
 
 	int64_t aux_position = _ftelli64(f);
 	if (aux_position < 0) {
@@ -354,7 +354,7 @@ Error FileAccessWindows::get_error() const {
 }
 
 Error FileAccessWindows::resize(int64_t p_length) {
-	ERR_FAIL_NULL_V_MSG(f, FAILED, "File must be opened before use.");
+	ERR_FAIL_NULL_V_MSG(f, FAILED, "res_5007.");
 	errno_t res = _chsize_s(_fileno(f), p_length);
 	switch (res) {
 		case 0:
@@ -495,7 +495,7 @@ uint64_t FileAccessWindows::_get_access_time(const String &p_file) {
 		}
 	}
 
-	ERR_FAIL_V_MSG(0, "Failed to get access time for: " + p_file + "");
+	ERR_FAIL_V_MSG(0, "res_5008: " + p_file + "");
 }
 
 int64_t FileAccessWindows::_get_size(const String &p_file) {
@@ -522,7 +522,7 @@ int64_t FileAccessWindows::_get_size(const String &p_file) {
 			return (int64_t)fsize.QuadPart;
 		}
 	}
-	ERR_FAIL_V_MSG(-1, "Failed to get size for: " + p_file + "");
+	ERR_FAIL_V_MSG(-1, "res_5009 " + p_file + "");
 }
 
 BitField<FileAccess::UnixPermissionFlags> FileAccessWindows::_get_unix_permissions(const String &p_file) {
@@ -537,7 +537,7 @@ bool FileAccessWindows::_get_hidden_attribute(const String &p_file) {
 	String file = fix_path(p_file);
 
 	DWORD attrib = GetFileAttributesW((LPCWSTR)file.utf16().get_data());
-	ERR_FAIL_COND_V_MSG(attrib == INVALID_FILE_ATTRIBUTES, false, "Failed to get attributes for: " + p_file);
+	ERR_FAIL_COND_V_MSG(attrib == INVALID_FILE_ATTRIBUTES, false, "res_5010: " + p_file);
 	return (attrib & FILE_ATTRIBUTE_HIDDEN);
 }
 
@@ -546,14 +546,14 @@ Error FileAccessWindows::_set_hidden_attribute(const String &p_file, bool p_hidd
 	const Char16String &file_utf16 = file.utf16();
 
 	DWORD attrib = GetFileAttributesW((LPCWSTR)file_utf16.get_data());
-	ERR_FAIL_COND_V_MSG(attrib == INVALID_FILE_ATTRIBUTES, FAILED, "Failed to get attributes for: " + p_file);
+	ERR_FAIL_COND_V_MSG(attrib == INVALID_FILE_ATTRIBUTES, FAILED, "res_5011 " + p_file);
 	BOOL ok;
 	if (p_hidden) {
 		ok = SetFileAttributesW((LPCWSTR)file_utf16.get_data(), attrib | FILE_ATTRIBUTE_HIDDEN);
 	} else {
 		ok = SetFileAttributesW((LPCWSTR)file_utf16.get_data(), attrib & ~FILE_ATTRIBUTE_HIDDEN);
 	}
-	ERR_FAIL_COND_V_MSG(!ok, FAILED, "Failed to set attributes for: " + p_file);
+	ERR_FAIL_COND_V_MSG(!ok, FAILED, "res_5011 " + p_file);
 
 	return OK;
 }
@@ -562,7 +562,7 @@ bool FileAccessWindows::_get_read_only_attribute(const String &p_file) {
 	String file = fix_path(p_file);
 
 	DWORD attrib = GetFileAttributesW((LPCWSTR)file.utf16().get_data());
-	ERR_FAIL_COND_V_MSG(attrib == INVALID_FILE_ATTRIBUTES, false, "Failed to get attributes for: " + p_file);
+	ERR_FAIL_COND_V_MSG(attrib == INVALID_FILE_ATTRIBUTES, false, "res_5009 " + p_file);
 	return (attrib & FILE_ATTRIBUTE_READONLY);
 }
 
@@ -571,14 +571,14 @@ Error FileAccessWindows::_set_read_only_attribute(const String &p_file, bool p_r
 	const Char16String &file_utf16 = file.utf16();
 
 	DWORD attrib = GetFileAttributesW((LPCWSTR)file_utf16.get_data());
-	ERR_FAIL_COND_V_MSG(attrib == INVALID_FILE_ATTRIBUTES, FAILED, "Failed to get attributes for: " + p_file);
+	ERR_FAIL_COND_V_MSG(attrib == INVALID_FILE_ATTRIBUTES, FAILED, "res_5009 " + p_file);
 	BOOL ok;
 	if (p_ro) {
 		ok = SetFileAttributesW((LPCWSTR)file_utf16.get_data(), attrib | FILE_ATTRIBUTE_READONLY);
 	} else {
 		ok = SetFileAttributesW((LPCWSTR)file_utf16.get_data(), attrib & ~FILE_ATTRIBUTE_READONLY);
 	}
-	ERR_FAIL_COND_V_MSG(!ok, FAILED, "Failed to set attributes for: " + p_file);
+	ERR_FAIL_COND_V_MSG(!ok, FAILED, "res_5009 " + p_file);
 
 	return OK;
 }
@@ -604,7 +604,7 @@ void FileAccessWindows::initialize() {
 	}
 
 	_setmaxstdio(8192);
-	print_verbose(vformat("Maximum number of file handles: %d", _getmaxstdio()));
+	print_verbose(vformat("res_5012: %d", _getmaxstdio()));
 }
 
 void FileAccessWindows::finalize() {

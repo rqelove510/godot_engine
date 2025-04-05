@@ -117,7 +117,7 @@ HMACContext *HMACContext::create(bool p_notify_postinitialize) {
 	if (_create) {
 		return _create(p_notify_postinitialize);
 	}
-	ERR_FAIL_V_MSG(nullptr, "HMACContext is not available when the mbedtls module is disabled.");
+	ERR_FAIL_V_MSG(nullptr, "res_8001");
 }
 
 /// Crypto
@@ -128,7 +128,7 @@ Crypto *Crypto::create(bool p_notify_postinitialize) {
 	if (_create) {
 		return _create(p_notify_postinitialize);
 	}
-	ERR_FAIL_V_MSG(nullptr, "Crypto is not available when the mbedtls module is disabled.");
+	ERR_FAIL_V_MSG(nullptr, "res_8002");
 }
 
 void Crypto::load_default_certificates(const String &p_path) {
@@ -139,7 +139,7 @@ void Crypto::load_default_certificates(const String &p_path) {
 
 PackedByteArray Crypto::hmac_digest(HashingContext::HashType p_hash_type, const PackedByteArray &p_key, const PackedByteArray &p_msg) {
 	Ref<HMACContext> ctx = Ref<HMACContext>(HMACContext::create());
-	ERR_FAIL_COND_V_MSG(ctx.is_null(), PackedByteArray(), "HMAC is not available without mbedtls module.");
+	ERR_FAIL_COND_V_MSG(ctx.is_null(), PackedByteArray(), "res_8003");
 	Error err = ctx->start(p_hash_type, p_key);
 	ERR_FAIL_COND_V(err != OK, PackedByteArray());
 	err = ctx->update(p_msg);
@@ -236,7 +236,7 @@ Error ResourceFormatSaverCrypto::save(const Ref<Resource> &p_resource, const Str
 	} else {
 		ERR_FAIL_V(ERR_INVALID_PARAMETER);
 	}
-	ERR_FAIL_COND_V_MSG(err != OK, err, vformat("Cannot save Crypto resource to file '%s'.", p_path));
+	ERR_FAIL_COND_V_MSG(err != OK, err, vformat("res_8004 '%s'.", p_path));
 	return OK;
 }
 

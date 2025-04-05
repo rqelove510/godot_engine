@@ -54,8 +54,8 @@ void ZHGPacker::_bind_methods() {
 }
 
 Error ZHGPacker::respak_begin(const String &p_pck_path, int p_alignment, const String &p_key, bool p_encrypt_directory) {
-	ERR_FAIL_COND_V_MSG((p_key.is_empty() || !p_key.is_valid_hex_number(false) || p_key.length() != 64), ERR_CANT_CREATE, "Invalid Encryption Key (must be 64 characters long).");
-	ERR_FAIL_COND_V_MSG(p_alignment <= 0, ERR_CANT_CREATE, "Invalid alignment, must be greater then 0.");
+	ERR_FAIL_COND_V_MSG((p_key.is_empty() || !p_key.is_valid_hex_number(false) || p_key.length() != 64), ERR_CANT_CREATE, "res_6001.");
+	ERR_FAIL_COND_V_MSG(p_alignment <= 0, ERR_CANT_CREATE, "res_6002.");
 
 	String _key = p_key.to_lower();
 	key.resize(32);
@@ -85,7 +85,7 @@ Error ZHGPacker::respak_begin(const String &p_pck_path, int p_alignment, const S
 	enc_dir = p_encrypt_directory;
 
 	file = FileAccess::open(p_pck_path, FileAccess::WRITE);
-	ERR_FAIL_COND_V_MSG(file.is_null(), ERR_CANT_CREATE, vformat("faild with opf to write: '%s'.", String(p_pck_path)));
+	ERR_FAIL_COND_V_MSG(file.is_null(), ERR_CANT_CREATE, vformat("res_6003: '%s'.", String(p_pck_path)));
 
 	alignment = p_alignment;
 
@@ -111,7 +111,7 @@ Error ZHGPacker::respak_begin(const String &p_pck_path, int p_alignment, const S
 }
 
 Error ZHGPacker::add_file_removal(const String &p_target_path) {
-	ERR_FAIL_COND_V_MSG(file.is_null(), ERR_INVALID_PARAMETER, "File must be opened before use.");
+	ERR_FAIL_COND_V_MSG(file.is_null(), ERR_INVALID_PARAMETER, "res_6004.");
 
 	File pf;
 	// Simplify path here and on every 'files' access so that paths that have extra '/'
@@ -129,7 +129,7 @@ Error ZHGPacker::add_file_removal(const String &p_target_path) {
 }
 
 Error ZHGPacker::add_file(const String &p_target_path, const String &p_source_path, bool p_encrypt) {
-	ERR_FAIL_COND_V_MSG(file.is_null(), ERR_INVALID_PARAMETER, "File must be opened before use.");
+	ERR_FAIL_COND_V_MSG(file.is_null(), ERR_INVALID_PARAMETER, "res_6005.");
 
 	Ref<FileAccess> f = FileAccess::open(p_source_path, FileAccess::READ);
 	if (f.is_null()) {
@@ -174,7 +174,7 @@ Error ZHGPacker::add_file(const String &p_target_path, const String &p_source_pa
 }
 
 Error ZHGPacker::flush(bool p_verbose) {
-	ERR_FAIL_COND_V_MSG(file.is_null(), ERR_INVALID_PARAMETER, "File must be opened before use.");
+	ERR_FAIL_COND_V_MSG(file.is_null(), ERR_INVALID_PARAMETER, "res_6006.");
 
 	int64_t file_base_ofs = file->get_position();
 	file->store_64(0);
@@ -276,7 +276,7 @@ Error ZHGPacker::flush(bool p_verbose) {
 		count += 1;
 		const int file_num = files.size();
 		if (p_verbose && (file_num > 0)) {
-			print_line(vformat("[%d/%d - %d%%] ZHGPacker flush: %s -> %s", count, file_num, float(count) / file_num * 100, files[i].src_path, files[i].path));
+			print_line(vformat("[%d/%d - %d%%] res_6008: %s -> %s", count, file_num, float(count) / file_num * 100, files[i].src_path, files[i].path));
 		}
 	}
 
