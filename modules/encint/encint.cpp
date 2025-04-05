@@ -213,22 +213,6 @@ uint64_t EncInt::_get_rot_value(uint64_t value, bool clamp) {
 	return (Math::rand() % 15) + 1;
 }
 
-//EncInt::EncInt() :
-//		_value(0), _type("unknow_int") {
-//	if (_global_key == 0) {
-//		String mac_addr = OS::get_singleton()->get_mac_address();
-//		if (mac_addr == "") {
-//			mac_addr = OS::get_singleton()->get_unique_id();
-//		}
-//		mac_addr += "_ZHGAME";
-//		_global_key = mac_addr.hash() * 100 + 0x48;
-//	}
-//	_m_instance_salt = generate_big_randnum();
-//	_init_precomputed_keys();
-//
-//	set_value(0);
-//}
-
 EncInt::EncInt(uint64_t init_value, String type) {
 	_type = type;
 	if (_global_key == 0) {
@@ -245,7 +229,7 @@ EncInt::EncInt(uint64_t init_value, String type) {
 	set_value(init_value);
 }
 
-Object *EncInt::create(uint64_t p_initial_value, const String &p_type) {
+RefCounted *EncInt::create(uint64_t p_initial_value, const String &p_type) {
 	return memnew(EncInt(p_initial_value, p_type));
 }
 

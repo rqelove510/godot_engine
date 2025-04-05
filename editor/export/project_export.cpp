@@ -1224,7 +1224,7 @@ void ProjectExportDialog::_export_pck_zip_selected(const String &p_path) {
 		if (export_as_patch) {
 			platform->export_pack_patch(current, export_debug, p_path);
 		} else {
-			platform->export_pack(current, export_debug, p_path.get_base_dir() + RES_PACK_NAME);
+			platform->export_pack(current, export_debug, p_path);
 		}
 	} else {
 		ERR_FAIL_MSG("res_11009");

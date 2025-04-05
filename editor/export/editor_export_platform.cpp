@@ -1928,7 +1928,7 @@ Error EditorExportPlatform::save_pack(const Ref<EditorExportPreset> &p_preset, b
 	int64_t embed_pos = 0;
 	if (!p_embed) {
 		// Regular output to separate PCK file
-		f = FileAccess::open(p_path, FileAccess::WRITE);
+		f = FileAccess::open(p_path.get_base_dir().path_join( RES_PACK_NAME), FileAccess::WRITE);
 		if (f.is_null()) {
 			DirAccess::remove_file_or_error(tmppath);
 			add_message(EXPORT_MESSAGE_ERROR, TTR("Save bao"), vformat(TTR("faild with opf for writing at path \"%s\"."), p_path));

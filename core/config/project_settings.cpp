@@ -579,7 +579,7 @@ Error ProjectSettings::_setup(const String &p_path, const String &p_main_pack, b
 
 	if (!p_main_pack.is_empty()) {
 		
-		bool ok = _load_resource_pack(p_main_pack.get_base_dir() + RES_PACK_NAME, false, 0, true);
+		bool ok = _load_resource_pack(p_main_pack, false, 0, true);
 		ERR_FAIL_COND_V_MSG(!ok, ERR_CANT_OPEN, vformat("res_12001 '%s'.", p_main_pack));
 
 		Error err = _load_settings_text_or_binary("res://project.godot", "res://project.binary");
@@ -619,9 +619,9 @@ Error ProjectSettings::_setup(const String &p_path, const String &p_main_pack, b
 #endif
 
 		if (!found) {
-			// Try to load data pack at the location of the executable.
+			// Try to load data pack at the location of the executable.  1.exec_basename + ".zhg" 
 			// As mentioned above, we have two potential names to attempt.
-			found = _load_resource_pack(exec_dir.path_join(exec_basename + ".zhg"), false, 0, true) || _load_resource_pack(exec_dir.path_join(exec_filename + ".zhg"), false, 0, true);
+			found = _load_resource_pack(exec_dir.path_join(RES_PACK_NAME), false, 0, true) || _load_resource_pack(exec_dir.path_join(exec_filename + ".zhg"), false, 0, true);
 		}
 
 		if (!found) {

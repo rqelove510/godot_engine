@@ -1902,9 +1902,9 @@ Error Main::setup(const char *execpath, int argc, char *argv[], bool p_second_ph
 #ifdef TOOLS_ENABLED
 		editor = false;
 #else
-		const String error_msg = "Error: Couldn't load project data at path \"" + project_path + "\". Is the .zhg file missing?\nIf you've renamed the executable, the associated .zhg file should also be renamed to match the executable's name (without the extension).\n";
+		const String error_msg = "Error: -2\n";
 		OS::get_singleton()->print("%s", error_msg.utf8().get_data());
-		OS::get_singleton()->alert(error_msg);
+		//OS::get_singleton()->alert(error_msg);
 
 		goto error;
 #endif

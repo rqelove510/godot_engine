@@ -2,11 +2,11 @@
 #define ENCINT_H
 
 #include "core/crypto/crypto_core.h"
-#include "core/object/object.h"
+//#include "core/object/RefCounted.h"
 #include "core/os/mutex.h"
 
-class EncInt : public Object {
-	GDCLASS(EncInt, Object);
+class EncInt : public RefCounted {
+	GDCLASS(EncInt, RefCounted);
 
 private:
 	EncInt()=default;
@@ -60,7 +60,7 @@ public:
 	static uint64_t restore_num(const String &base64_str);
 	static uint64_t restore_num_from_raw_data(const Array &raw_data);
 
-	static Object *create(uint64_t p_initial_value, const String &p_type);
+	static RefCounted *create(uint64_t p_initial_value, const String &p_type);
 	EncInt(uint64_t p_initial_value, String p_type);
 	~EncInt() = default;
 };
