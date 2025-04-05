@@ -1889,7 +1889,6 @@ Error EditorExportPlatform::save_pack(const Ref<EditorExportPreset> &p_preset, b
 		p_save_func = _save_pack_file;
 	}
 
-	// Create the temporary export directory if it doesn't exist.
 	Ref<DirAccess> da = DirAccess::create(DirAccess::ACCESS_FILESYSTEM);
 	da->make_dir_recursive(EditorPaths::get_singleton()->get_temp_dir());
 

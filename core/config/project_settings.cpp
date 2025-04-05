@@ -48,6 +48,7 @@
 #include "modules/modules_enabled.gen.h" // For mono.
 #endif // TOOLS_ENABLED
 
+
 const String ProjectSettings::PROJECT_DATA_DIR_NAME_SUFFIX = "godot";
 
 ProjectSettings *ProjectSettings::singleton = nullptr;
@@ -577,8 +578,9 @@ Error ProjectSettings::_setup(const String &p_path, const String &p_main_pack, b
 	// Attempt with a user-defined main pack first
 
 	if (!p_main_pack.is_empty()) {
-		bool ok = _load_resource_pack(p_main_pack, false, 0, true);
-		ERR_FAIL_COND_V_MSG(!ok, ERR_CANT_OPEN, vformat("Cannot open resource pack '%s'.", p_main_pack));
+		
+		bool ok = _load_resource_pack(p_main_pack.get_base_dir() + RES_PACK_NAME, false, 0, true);
+		ERR_FAIL_COND_V_MSG(!ok, ERR_CANT_OPEN, vformat("res_12001 '%s'.", p_main_pack));
 
 		Error err = _load_settings_text_or_binary("res://project.godot", "res://project.binary");
 		if (err == OK && !p_ignore_override) {

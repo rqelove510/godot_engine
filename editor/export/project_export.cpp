@@ -1224,10 +1224,10 @@ void ProjectExportDialog::_export_pck_zip_selected(const String &p_path) {
 		if (export_as_patch) {
 			platform->export_pack_patch(current, export_debug, p_path);
 		} else {
-			platform->export_pack(current, export_debug, p_path);
+			platform->export_pack(current, export_debug, p_path.get_base_dir() + RES_PACK_NAME);
 		}
 	} else {
-		ERR_FAIL_MSG("Path must end with .zhg or .zip");
+		ERR_FAIL_MSG("res_11009");
 	}
 }
 
@@ -1626,7 +1626,7 @@ ProjectExportDialog::ProjectExportDialog() {
 
 	enc_pck = memnew(CheckButton);
 	enc_pck->connect(SceneStringName(toggled), callable_mp(this, &ProjectExportDialog::_enc_pck_changed));
-	enc_pck->set_text(TTR("Encrypt Exported PCK"));
+	enc_pck->set_text(TTR("Encrypt Exported ZHG"));
 	sec_vb->add_child(enc_pck);
 
 	enc_directory = memnew(CheckButton);
@@ -1705,8 +1705,8 @@ ProjectExportDialog::ProjectExportDialog() {
 	// Export buttons, dialogs and errors.
 
 	set_cancel_button_text(TTR("Close"));
-	set_ok_button_text(TTR("Export PCK/ZIP..."));
-	get_ok_button()->set_tooltip_text(TTR("Export the project resources as a PCK or ZIP package. This is not a playable build, only the project data without a Godot executable."));
+	set_ok_button_text(TTR("Export ZHG/ZIP..."));
+	get_ok_button()->set_tooltip_text(TTR("Export the project resources as a ZHG or ZIP package. This is not a playable build, only the project data without a Godot executable."));
 	get_ok_button()->set_disabled(true);
 
 	export_button = add_button(TTR("Export Project..."), !DisplayServer::get_singleton()->get_swap_cancel_ok(), "export");

@@ -31,6 +31,7 @@
 #pragma once
 
 #include "core/object/class_db.h"
+#define RES_PACK_NAME "/game_res.zhg"
 
 template <typename T>
 class TypedArray;

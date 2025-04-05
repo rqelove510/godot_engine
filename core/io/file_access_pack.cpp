@@ -66,10 +66,10 @@ void PackedData::add_path(const String &p_pkg_path, const String &p_path, uint64
 	}
 
 	if (!exists) {
-		// Search for directory.
+
 		PackedDir *cd = root;
 
-		if (simplified_path.contains_char('/')) { // In a subdirectory.
+		if (simplified_path.contains_char('/')) {
 			Vector<String> ds = simplified_path.get_base_dir().split("/");
 
 			for (int j = 0; j < ds.size(); j++) {
@@ -85,7 +85,6 @@ void PackedData::add_path(const String &p_pkg_path, const String &p_path, uint64
 			}
 		}
 		String filename = simplified_path.get_file();
-		// Don't add as a file if the path points to a directory.
 		if (!filename.is_empty()) {
 			cd->files.insert(filename);
 		}
@@ -99,15 +98,15 @@ void PackedData::remove_path(const String &p_path) {
 		return;
 	}
 
-	// Search for directory.
+
 	PackedDir *cd = root;
 
-	if (simplified_path.contains_char('/')) { // In a subdirectory.
+	if (simplified_path.contains_char('/')) { 
 		Vector<String> ds = simplified_path.get_base_dir().split("/");
 
 		for (int j = 0; j < ds.size(); j++) {
 			if (!cd->subdirs.has(ds[j])) {
-				return; // Subdirectory does not exist, do not bother creating.
+				return; 
 			} else {
 				cd = cd->subdirs[ds[j]];
 			}
@@ -185,7 +184,6 @@ PackedData::~PackedData() {
 	_free_packed_dirs(root);
 }
 
-//////////////////////////////////////////////////////////////////
 
 bool PackedSourcePCK::try_open_pack(const String &p_path, bool p_replace_files, uint64_t p_offset) {
 	Ref<FileAccess> f = FileAccess::open(p_path, FileAccess::READ);
@@ -195,23 +193,23 @@ bool PackedSourcePCK::try_open_pack(const String &p_path, bool p_replace_files, 
 
 	bool pck_header_found = false;
 
-	// Search for the header at the start offset - standalone PCK file.
+
 	f->seek(p_offset);
 	uint32_t magic = f->get_32();
 	if (magic == PACK_HEADER_MAGIC) {
 		pck_header_found = true;
 	}
 
-	// Search for the header in the executable "zhg" section - self contained executable.
+	
 	if (!pck_header_found) {
-		// Loading with offset feature not supported for self contained exe files.
+		
 		if (p_offset != 0) {
-			ERR_FAIL_V_MSG(false, "lselfcontext_faild.");
+			ERR_FAIL_V_MSG(false, "res_11005.");
 		}
 
 		int64_t pck_off = OS::get_singleton()->get_embedded_pck_offset();
 		if (pck_off != 0) {
-			// Search for the header, in case PCK start and section have different alignment.
+
 			for (int i = 0; i < 8; i++) {
 				f->seek(pck_off);
 				magic = f->get_32();
@@ -227,9 +225,7 @@ bool PackedSourcePCK::try_open_pack(const String &p_path, bool p_replace_files, 
 		}
 	}
 
-	// Search for the header at the end of file - self contained executable.
 	if (!pck_header_found) {
-		// Loading with offset feature not supported for self contained exe files.
 		if (p_offset != 0) {
 			ERR_FAIL_V_MSG(false, "Lsc with offset not supported.");
 		}
@@ -245,7 +241,7 @@ bool PackedSourcePCK::try_open_pack(const String &p_path, bool p_replace_files, 
 			magic = f->get_32();
 			if (magic == PACK_HEADER_MAGIC) {
 #ifdef DEBUG_ENABLED
-				print_verbose("pkendfind offset 0x" + String::num_int64(f->get_position() - 4, 16));
+				print_verbose("res 0x" + String::num_int64(f->get_position() - 4, 16));
 #endif
 				pck_header_found = true;
 			}
@@ -259,11 +255,11 @@ bool PackedSourcePCK::try_open_pack(const String &p_path, bool p_replace_files, 
 	int64_t pck_start_pos = f->get_position() - 4;
 
 
-	f->get_64(); // not used for validation.
-	f->get_32(); // format version
+	f->get_64(); 
+	f->get_32(); 
 
 	uint32_t pack_flags = f->get_32();
-	f->get_32();// not used for validation.
+	f->get_32();
 
 	uint64_t file_base = (f->get_64() ^ ENCRYPTED_XOR_KEY) - 0x7b1234;
 
@@ -279,7 +275,7 @@ bool PackedSourcePCK::try_open_pack(const String &p_path, bool p_replace_files, 
 	if (enc_directory) {
 		Ref<EncFile> fae;
 		fae.instantiate();
-		//ERR_FAIL_COND_V_MSG(fae.is_null(), false, "Can't open encrypted pack directory.");
+		ERR_FAIL_COND_V_MSG(fae.is_null(), false, "res_11008");
 
 		Vector<uint8_t> key;
 		key.resize(32);
@@ -291,7 +287,7 @@ bool PackedSourcePCK::try_open_pack(const String &p_path, bool p_replace_files, 
 		if (err != OK) {
 			return false;
 		}
-		//ERR_FAIL_COND_V_MSG(err, false, "Can't open encrypted pack directory.");
+		ERR_FAIL_COND_V_MSG(err, false, "res_11001");
 		f = fae;
 	}
 
@@ -309,7 +305,7 @@ bool PackedSourcePCK::try_open_pack(const String &p_path, bool p_replace_files, 
 		f->get_buffer(md5, 16);
 		uint32_t flags = f->get_32();
 
-		if (flags & PACK_FILE_REMOVAL) { // The file was removed.
+		if (flags & PACK_FILE_REMOVAL) { 
 			PackedData::get_singleton()->remove_path(path);
 		} else {
 			PackedData::get_singleton()->add_path(p_path, path, file_base + ofs + p_offset, size, md5, this, p_replace_files, (flags & PACK_FILE_ENCRYPTED));
@@ -323,11 +319,10 @@ Ref<FileAccess> PackedSourcePCK::get_file(const String &p_path, PackedData::Pack
 	return memnew(FileAccessPack(p_path, *p_file));
 }
 
-//////////////////////////////////////////////////////////////////
 
 bool PackedSourceDirectory::try_open_pack(const String &p_path, bool p_replace_files, uint64_t p_offset) {
-	// Load with offset feature only supported for PCK files.
-	//ERR_FAIL_COND_V_MSG(p_offset != 0, false, "Invalid pak data. Note that loading files with a non-zero offset isn't supported with directories.");
+
+	ERR_FAIL_COND_V_MSG(p_offset != 0, false, "res_11002");
 
 	if (p_path != "res://") {
 		return false;
@@ -361,10 +356,9 @@ void PackedSourceDirectory::add_directory(const String &p_path, bool p_replace_f
 	}
 }
 
-//////////////////////////////////////////////////////////////////
 
 Error FileAccessPack::open_internal(const String &p_path, int p_mode_flags) {
-	//ERR_PRINT("Can't open pack-referenced file.");
+	ERR_PRINT("res_11003");
 	return ERR_UNAVAILABLE;
 }
 
@@ -377,7 +371,7 @@ bool FileAccessPack::is_open() const {
 }
 
 void FileAccessPack::seek(uint64_t p_position) {
-	//ERR_FAIL_COND_MSG(f.is_null(), "File must be opened before use.");
+	ERR_FAIL_COND_MSG(f.is_null(), "res_11007.");
 
 	if (p_position > pf.size) {
 		eof = true;
@@ -406,7 +400,7 @@ bool FileAccessPack::eof_reached() const {
 }
 
 uint64_t FileAccessPack::get_buffer(uint8_t *p_dst, uint64_t p_length) const {
-	ERR_FAIL_COND_V_MSG(f.is_null(), -1, "File must be opened before use.");
+	ERR_FAIL_COND_V_MSG(f.is_null(), -1, "res_11004");
 	ERR_FAIL_COND_V(!p_dst && p_length > 0, -1);
 
 	if (eof) {
@@ -430,7 +424,7 @@ uint64_t FileAccessPack::get_buffer(uint8_t *p_dst, uint64_t p_length) const {
 }
 
 void FileAccessPack::set_big_endian(bool p_big_endian) {
-	ERR_FAIL_COND_MSG(f.is_null(), "File must be opened before use.");
+	ERR_FAIL_COND_MSG(f.is_null(), "res_11005");
 
 	FileAccess::set_big_endian(p_big_endian);
 	f->set_big_endian(p_big_endian);
@@ -462,7 +456,7 @@ void FileAccessPack::close() {
 FileAccessPack::FileAccessPack(const String &p_path, const PackedData::PackedFile &p_file) :
 		pf(p_file),
 		f(FileAccess::open(pf.pack, FileAccess::READ)) {
-	//ERR_FAIL_COND_MSG(f.is_null(), vformat("Can't open pack-referenced file '%s'.", String(pf.pack)));
+	ERR_FAIL_COND_MSG(f.is_null(), vformat("res_11005: '%s'.", String(pf.pack)));
 
 	f->seek(pf.offset);
 	off = pf.offset;
@@ -470,7 +464,7 @@ FileAccessPack::FileAccessPack(const String &p_path, const PackedData::PackedFil
 	if (pf.encrypted) {
 		Ref<EncFile> fae;
 		fae.instantiate();
-		//ERR_FAIL_COND_MSG(fae.is_null(), vformat("Can't open encrypted pack-referenced file '%s'.", String(pf.pack)));
+		ERR_FAIL_COND_MSG(fae.is_null(), vformat("res_11006: '%s'.", String(pf.pack)));
 
 		Vector<uint8_t> key;
 		key.resize(32);
@@ -479,7 +473,7 @@ FileAccessPack::FileAccessPack(const String &p_path, const PackedData::PackedFil
 		}
 
 		Error err = fae->open_file_parse(f, key, EncFile::MODE_READ, false);
-		//ERR_FAIL_COND_MSG(err, vformat("Can't open encrypted pack-referenced file '%s'.", String(pf.pack)));
+		ERR_FAIL_COND_MSG(err, vformat("res_11007: '%s'.", String(pf.pack)));
 		f = fae;
 		off = 0;
 	}
@@ -487,9 +481,6 @@ FileAccessPack::FileAccessPack(const String &p_path, const PackedData::PackedFil
 	eof = false;
 }
 
-//////////////////////////////////////////////////////////////////////////////////
-// DIR ACCESS
-//////////////////////////////////////////////////////////////////////////////////
 
 Error DirAccessPack::list_dir_begin() {
 	list_dirs.clear();
@@ -546,7 +537,6 @@ String DirAccessPack::get_drive(int p_drive) {
 PackedData::PackedDir *DirAccessPack::_find_dir(const String &p_dir) {
 	String nd = p_dir.replace("\\", "/");
 
-	// Special handling since simplify_path() will forbid it
 	if (p_dir == "..") {
 		return current->parent;
 	}
